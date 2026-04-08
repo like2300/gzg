@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Administration - GZG{% endblock %}</title>
+
+    <!-- Fonts: Plus Jakarta Sans for Modern SaaS Look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            DEFAULT: '#dc2626',
+                            light: '#ef4444',
+                            dark: '#b91c1c'
+                        },
+                        secondary: '#64748b',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar for sleek look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        /* Blob Animation */
+        .blob {
+            position: absolute;
+            filter: blur(40px);
+            z-index: 0;
+            opacity: 0.4;
+            animation: move 10s infinite alternate;
+        }
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(20px, -20px) scale(1.1); }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans overflow-x-hidden">
+
+    <!-- Mobile Overlay (Backdrop) -->
+    <div id="mobile-overlay" onclick="toggleSidebarState()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity opacity-0"></div>
+
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#dc2626] border-r border-gray-200 dark:border-red-900 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl lg:shadow-none flex flex-col">
+            <!-- Sidebar Header -->
+            <div class="h-20 flex-shrink-0 flex items-center px-6 border-b border-gray-100 dark:border-red-800/50 bg-white dark:bg-[#dc2626]">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-red-900/20">
+                        GZG
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold text-primary dark:text-white leading-tight">GZG</h1>
+                        <p class="text-[10px] text-gray-500 dark:text-red-200">Administration</p>
+                    </div>
+                </div>
+                <button id="closeSidebar" class="lg:hidden ml-auto p-2 text-gray-500 hover:text-primary transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto scrollbar-hide">
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Menu Principal</p>
+
+                <a href="{% url 'admin_dashboard' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group {% if request.resolver_match.url_name == 'admin_dashboard' %}active bg-primary/5 text-primary dark:bg-white/10 dark:text-white{% else %}text-gray-600 dark:text-red-100 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white{% endif %}">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    Dashboard
+                </a>
+
+                <a href="{% url 'admin_users' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group {% if 'user' in request.resolver_match.url_name %}active bg-primary/5 text-primary dark:bg-white/10 dark:text-white{% else %}text-gray-600 dark:text-red-100 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white{% endif %}">
+                    <i data-lucide="users" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    Utilisateurs
+                </a>
+
+                <a href="{% url 'admin_payments' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group {% if 'payment' in request.resolver_match.url_name %}active bg-primary/5 text-primary dark:bg-white/10 dark:text-white{% else %}text-gray-600 dark:text-red-100 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white{% endif %}">
+                    <i data-lucide="credit-card" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    Paiements
+                </a>
+
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-6">Réseau</p>
+
+                <a href="{% url 'admin_all_networks' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group {% if 'network' in request.resolver_match.url_name %}active bg-primary/5 text-primary dark:bg-white/10 dark:text-white{% else %}text-gray-600 dark:text-red-100 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white{% endif %}">
+                    <i data-lucide="grid-3x3" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    Tous les réseaux
+                </a>
+
+                <a href="{% url 'admin_settings' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group {% if 'settings' in request.resolver_match.url_name %}active bg-primary/5 text-primary dark:bg-white/10 dark:text-white{% else %}text-gray-600 dark:text-red-100 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white{% endif %}">
+                    <i data-lucide="settings" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    Paramètres
+                </a>
+
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-6">Général</p>
+
+                <a href="{% url 'dashboard' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 dark:text-red-100 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white transition-all duration-200 group">
+                    <i data-lucide="arrow-left" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    Retour au site
+                </a>
+            </nav>
+
+            <!-- User Profile Snippet Sidebar -->
+            <div class="p-4 border-t border-gray-100 dark:border-red-800/50 mt-auto bg-white dark:bg-[#dc2626]">
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-red-900/30">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ user.username }}" alt="User" class="w-10 h-10 rounded-full border border-gray-200">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ user.username|default:"Admin" }}</p>
+                        <p class="text-xs text-gray-500 dark:text-red-200 truncate">{{ user.email|default:"admin@davant.com" }}</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT WRAPPER -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative lg:ml-64 transition-all duration-300">
+
+            <!-- TOPBAR -->
+            <header class="h-20 flex-shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-6 z-30 sticky top-0">
+                <div class="flex items-center gap-4">
+                    <button id="toggleSidebar" class="p-2 -ml-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 lg:hidden focus:ring-2 focus:ring-primary/20">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+
+                </div>
+
+                <div class="flex items-center gap-4">
+
+
+                    <!-- Dark Mode Toggle -->
+                    <button id="themeToggle" class="p-2 rounded-full text-gray-500 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                    </button>
+
+                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-slate-700 mx-2 hidden sm:block"></div>
+
+                    <div class="hidden sm:flex items-center gap-2">
+                        <a class="text-sm font-medium text-gray-700 p-4 rounded-lg bg-gray-100 dark:bg-slate-800 dark:text-gray-200" href="{% url 'logout' %}">Déconnexion</a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SCROLLABLE CONTENT AREA -->
+            <main class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="main-scroll">
+
+                <!-- Messages -->
+                {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                    <div class="p-4 rounded-xl {% if message.tags == 'error' %}bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800{% elif message.tags == 'success' %}bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800{% elif message.tags == 'warning' %}bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800{% else %}bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800{% endif %}">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="{% if message.tags == 'error' %}alert-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}alert-triangle{% else %}info{% endif %}" class="w-5 h-5 {% if message.tags == 'error' %}text-red-600{% elif message.tags == 'success' %}text-green-600{% elif message.tags == 'warning' %}text-yellow-600{% else %}text-blue-600{% endif %}"></i>
+                            <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-800 dark:text-red-200{% elif message.tags == 'success' %}text-green-800 dark:text-green-200{% elif message.tags == 'warning' %}text-yellow-800 dark:text-yellow-200{% else %}text-blue-800 dark:text-blue-200{% endif %}">{{ message }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Main Content Block -->
+                {% block content %}{% endblock %}
+
+                <!-- FOOTER -->
+                <footer class="mt-12 pt-8 border-t border-gray-200 dark:border-slate-800">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div class="flex items-center gap-2">
+                             <div class="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white text-[10px] font-bold">GZG</div>
+                             <span>&copy; {% now "Y" %} GZG - Tous droits réservés</span>
+                        </div>
+                        <div class="flex gap-6">
+                            <a href="#" class="hover:text-primary transition-colors">Aide</a>
+                            <a href="#" class="hover:text-primary transition-colors">Contact</a>
+                            <a href="#" class="hover:text-primary transition-colors">Confidentialité</a>
+                        </div>
+                    </div>
+                </footer>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- Sidebar Logic ---
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        const toggleBtn = document.getElementById('toggleSidebar');
+        const closeBtn = document.getElementById('closeSidebar');
+
+        function toggleSidebarState() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+
+            if (isClosed) {
+                // Open Sidebar
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                // Small delay for fade effect
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                }, 10);
+            } else {
+                // Close Sidebar
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 300); // Match transition duration
+            }
+        }
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSidebarState();
+        });
+
+        closeBtn.addEventListener('click', toggleSidebarState);
+
+        // --- Dark Mode Logic ---
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // Check local storage or preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            if (html.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+        });
+
+        // Scroll to top on page load
+        document.getElementById('main-scroll').scrollTop = 0;
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

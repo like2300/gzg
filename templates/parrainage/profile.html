@@ -1,0 +1,476 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}Mon Profil - GZG{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modal Styles */
+    .modal-custom {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-custom.show {
+        display: flex;
+    }
+
+    .modal-content-custom {
+        background: white;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header-custom {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .modal-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--bg-color);
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .modal-close:active {
+        background: var(--border-color);
+    }
+
+    .modal-body-custom {
+        padding: 1.25rem;
+    }
+
+    /* Circular Progress */
+    .circular-progress-wrapper {
+        position: relative;
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+    }
+
+    .circular-progress {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(var(--primary-color) calc(var(--progress) * 3.6deg), var(--border-color) 0deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: all 0.5s ease;
+    }
+
+    .circular-progress::before {
+        content: '';
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    .circular-progress-content {
+        position: relative;
+        text-align: center;
+        z-index: 1;
+    }
+
+    .circular-progress-percent {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        line-height: 1;
+    }
+
+    .circular-progress-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+
+    .form-group-modern {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label-modern {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="slide-up">
+    <!-- En-tête -->
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">
+            <i class="bi bi-person-circle" style="color: var(--primary-color);"></i>
+            Mon Profil
+        </h2>
+        <p class="text-secondary mb-0">Gérez vos informations et parrainage</p>
+    </div>
+
+    <!-- Progression circulaire VIP -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-body text-center">
+            <h5 class="fw-bold mb-4">
+                <i class="bi bi-graph-up" style="color: var(--primary-color);"></i>
+                Progression VIP
+            </h5>
+            
+            <div class="circular-progress-wrapper mb-4">
+                <div class="circular-progress" style="--progress: {{ profile.progress_percent|floatformat:0 }}">
+                    <div class="circular-progress-content">
+                        <div class="circular-progress-percent">{{ profile.progress_percent|floatformat:1 }}%</div>
+                        <div class="circular-progress-label">
+                            {% if profile.is_vip %}
+                            <span style="color: var(--success-color);"><i class="bi bi-check-circle"></i> VIP</span>
+                            {% else %}
+                            En cours
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="p-3" style="background: rgba(220, 38, 38, 0.08); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block">Payé</small>
+                        <strong style="color: var(--primary-color);">{{ profile.total_paid|floatformat:0 }} FCFA</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3" style="background: rgba(16, 185, 129, 0.08); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block">Reste</small>
+                        <strong style="color: var(--success-color);">{{ profile.remaining_amount|floatformat:0 }} FCFA</strong>
+                    </div>
+                </div>
+            </div>
+
+            {% if not profile.is_vip %}
+            <p class="text-secondary small mt-3 mb-0">
+                <i class="bi bi-info-circle"></i> Encore <strong>{{ quota|floatformat:0 }} FCFA</strong> pour devenir VIP
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Informations utilisateur -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-header">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-person-badge" style="color: var(--primary-color);"></i>
+                Informations
+            </h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal()">
+                <i class="bi bi-pencil"></i>
+            </button>
+        </div>
+        <div class="card-mobile-body">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="list-item-avatar" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); width: 60px; height: 60px; font-size: 1.5rem;">
+                    {{ user.username|slice:":2"|upper }}
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ user.username }}</h3>
+                    <small class="text-secondary">{{ user.email }}</small>
+                    <div class="mt-1">
+                        {% if profile.is_vip %}
+                        <span class="badge-vip">
+                            <i class="bi bi-star-fill"></i> VIP
+                        </span>
+                        {% else %}
+                        <span class="badge-pending">
+                            <i class="bi bi-clock"></i> {{ profile.progress_percent|floatformat:0 }}%
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="p-3" style="background: var(--bg-color); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block">Code de parrainage</small>
+                        <strong style="color: var(--primary-color);">{{ profile.referral_code }}</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3" style="background: var(--bg-color); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block">Membre depuis</small>
+                        <strong style="color: var(--success-color);">{{ user.date_joined|date:"d/m/y" }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code et Parrainage -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-header">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-qr-code" style="color: var(--primary-color);"></i>
+                Parrainage
+            </h5>
+        </div>
+        <div class="card-mobile-body">
+            {% if profile.is_profile_complete %}
+                {% if profile.can_refer %}
+                <div class="alert alert-info mb-3" style="background: rgba(13, 110, 253, 0.08); border: none; border-radius: var(--radius-md);">
+                    <small>
+                        <i class="bi bi-info-circle"></i>
+                        Places restantes : <strong>{{ profile.remaining_referrals }}/{{ profile.REFERRAL_LIMIT }}</strong>
+                    </small>
+                </div>
+
+                <div class="qr-card mb-3">
+                    <img src="{{ profile.qr_code_url }}" alt="QR Code" class="qr-code-img">
+                    <p class="text-secondary small mt-2 mb-0">Scannez pour partager votre lien</p>
+                </div>
+
+                <div class="input-group-modern mb-2">
+                    <div class="input-group-icon">
+                        <i class="bi bi-link-45deg"></i>
+                    </div>
+                    <input type="text" class="input-group-input" value="{{ profile.referral_link }}" id="referralLink" readonly>
+                    <button class="btn btn-primary btn-sm" onclick="copyLink()" style="padding: 0.5rem 1rem;">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+                <small class="text-secondary">
+                    <i class="bi bi-person-badge"></i> Code : <strong>{{ profile.referral_code }}</strong>
+                </small>
+                {% else %}
+                <div class="text-center py-4">
+                    <div style="width: 80px; height: 80px; background: rgba(245, 158, 11, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                        <i class="bi bi-lock-fill" style="font-size: 2.5rem; color: var(--warning-color);"></i>
+                    </div>
+                    <h6 class="fw-bold">Limite atteinte</h6>
+                    <p class="text-secondary small mb-0">Vous avez atteint les {{ profile.REFERRAL_LIMIT }} filleuls maximum</p>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="text-center py-4">
+                <div style="width: 80px; height: 80px; background: rgba(220, 38, 38, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 2.5rem; color: var(--primary-color);"></i>
+                </div>
+                <h6 class="fw-bold">Profil incomplet</h6>
+                <p class="text-secondary small mb-3">
+                    Ajoutez votre numéro de téléphone et votre pays pour activer le parrainage
+                </p>
+                <button class="btn btn-primary" onclick="openEditModal()">
+                    <i class="bi bi-pencil"></i>
+                    Compléter mon profil
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-header">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-graph-up" style="color: var(--primary-color);"></i>
+                Mon Réseau
+            </h5>
+        </div>
+        <div class="card-mobile-body">
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="p-3" style="background: var(--bg-color); border-radius: var(--radius-md);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-people" style="color: var(--primary-color);"></i>
+                            <small class="text-secondary">Filleuls</small>
+                        </div>
+                        <div class="fw-bold" style="font-size: 1.5rem;">{{ profile.referrals.count }}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3" style="background: var(--bg-color); border-radius: var(--radius-md);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-diagram-3" style="color: #6366f1;"></i>
+                            <small class="text-secondary">Réseau</small>
+                        </div>
+                        <div class="fw-bold" style="font-size: 1.5rem; color: #6366f1;">{{ total_downline }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Déconnexion -->
+    <a href="{% url 'logout' %}" class="btn btn-outline-primary w-100 mb-3">
+        <i class="bi bi-box-arrow-right"></i>
+        Se déconnecter
+    </a>
+</div>
+
+<!-- Modal Modification Profil -->
+<div class="modal-custom" id="editProfileModal">
+    <div class="modal-content-custom">
+        <div class="modal-header-custom">
+            <h3 class="modal-title">Modifier mon profil</h3>
+            <button class="modal-close" onclick="closeEditModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="modal-body-custom">
+            <form method="post" action="{% url 'profile' %}">
+                {% csrf_token %}
+                
+                <div class="form-group-modern">
+                    <label class="form-label-modern">NOM D'UTILISATEUR</label>
+                    <div class="input-group-modern">
+                        <div class="input-group-icon">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <input type="text" class="input-group-input" name="username" value="{{ user.username }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group-modern">
+                    <label class="form-label-modern">EMAIL</label>
+                    <div class="input-group-modern">
+                        <div class="input-group-icon">
+                            <i class="bi bi-envelope"></i>
+                        </div>
+                        <input type="email" class="input-group-input" name="email" value="{{ user.email }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="bi bi-telephone" style="color: var(--primary-color);"></i>
+                        NUMÉRO DE TÉLÉPHONE
+                    </label>
+                    <div class="input-group-modern">
+                        <div class="input-group-icon">
+                            <i class="bi bi-smartphone"></i>
+                        </div>
+                        <input type="tel" class="input-group-input" name="phone_number" value="{{ profile.phone_number|default:'' }}" placeholder="+33 6 12 34 56 78" required>
+                    </div>
+                </div>
+
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="bi bi-geo-alt" style="color: var(--primary-color);"></i>
+                        PAYS DE RÉSIDENCE
+                    </label>
+                    <div class="input-group-modern">
+                        <div class="input-group-icon">
+                            <i class="bi bi-flag"></i>
+                        </div>
+                        <select name="country" class="input-group-input" required style="appearance: none; cursor: pointer;">
+                            <option value="">-- Sélectionnez un pays --</option>
+                            {% for code, name in countries %}
+                            <option value="{{ code }}" {% if profile.country == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3" style="background: rgba(13, 110, 253, 0.08); border: none; border-radius: var(--radius-md);">
+                    <small>
+                        <i class="bi bi-lock"></i>
+                        Pour modifier votre mot de passe, contactez l'administrateur.
+                    </small>
+                </div>
+
+                <button type="submit" name="update_profile" class="btn btn-primary w-100">
+                    <i class="bi bi-check-lg"></i>
+                    Enregistrer les modifications
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openEditModal() {
+    document.getElementById('editProfileModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+    document.getElementById('editProfileModal').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// Fermer le modal en cliquant dehors
+document.getElementById('editProfileModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditModal();
+    }
+});
+
+function copyLink() {
+    const input = document.getElementById('referralLink');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    }).catch(err => {
+        alert('Erreur lors de la copie : ' + err);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}Arbre de {{ current_profile.user.username }} - GZG{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Fil d'ariane -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}"><i class="bi bi-house"></i> Accueil</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'my_referrals' %}"><i class="bi bi-people"></i> Mes Filleuls</a>
+            </li>
+            {% for crumb in breadcrumbs %}
+            {% if forloop.last %}
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-person"></i> {{ crumb.user.username }}
+            </li>
+            {% else %}
+            <li class="breadcrumb-item">
+                <a href="{% url 'view_parrain_tree' crumb.pk %}">{{ crumb.user.username }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+
+    <!-- En-tête du parrain actuel -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card card-custom border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                             style="width: 80px; height: 80px; font-size: 2rem; font-weight: bold; flex-shrink: 0;">
+                            {{ current_profile.user.username|slice:":2"|upper }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h1 class="fw-bold mb-1">
+                                <i class="bi bi-person-circle"></i> {{ current_profile.user.username }}
+                            </h1>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-code-slash"></i> Code: <strong>{{ current_profile.referral_code }}</strong>
+                                {% if current_profile.is_vip %}
+                                <span class="badge-vip ms-2">
+                                    <i class="bi bi-star-fill"></i> VIP
+                                </span>
+                                {% endif %}
+                            </p>
+                            <div class="d-flex gap-3 flex-wrap">
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-people"></i> {{ current_profile.referrals_count }} filleuls directs
+                                </span>
+                                <span class="badge bg-success">
+                                    <i class="bi bi-graph-up"></i> {{ current_profile.total_paid|floatformat:0 }} FCFA
+                                </span>
+                                <span class="badge {% if current_profile.progress_percent >= 100 %}bg-success{% else %}bg-warning{% endif %}">
+                                    <i class="bi bi-pie-chart"></i> {{ current_profile.progress_percent|floatformat:0 }}% complété
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm mb-2">
+                                <i class="bi bi-arrow-left"></i> Retour
+                            </a>
+                            {% if current_profile.referral_code %}
+                            <div class="small text-muted">Lien: {{ current_profile.referral_link|truncatechars:30 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card card-custom h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-people" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                    <h3 class="fw-bold mb-2">{{ total_referrals }}</h3>
+                    <p class="mb-0 text-muted">Filleuls directs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-diagram-3" style="font-size: 3rem; color: #6366f1; margin-bottom: 1rem;"></i>
+                    <h3 class="fw-bold mb-2" style="color: #6366f1;">{{ total_downline }}</h3>
+                    <p class="mb-0 text-muted">Réseau total</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-star" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                    <h3 class="fw-bold mb-2" style="color: #f59e0b;">{{ vip_referrals }}</h3>
+                    <p class="mb-0 text-muted">Filleuls VIP</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-custom h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-graph-up-arrow" style="font-size: 3rem; color: var(--success-color); margin-bottom: 1rem;"></i>
+                    <h3 class="fw-bold mb-2" style="color: var(--success-color);">{{ total_earned|floatformat:0 }} FCFA</h3>
+                    <p class="mb-0 text-muted">Total cumulé direct</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arbre de parrainage -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-white border-0 py-3">
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-diagram-3"></i> Arbre de Parrainage (Poupées Russes)
+                    </h4>
+                    <small class="text-muted">Cliquez sur un parrain pour voir ses enfants à l'infini</small>
+                </div>
+                <div class="card-body">
+                    {% if downline_tree %}
+                    <div class="tree-view">
+                        {% include 'parrainage/includes/tree_node.html' with tree=downline_tree %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-people" style="font-size: 5rem; color: #e2e8f0;"></i>
+                        <h4 class="text-muted mt-3">Aucun filleul pour le moment</h4>
+                        <p class="text-muted mb-4">Ce parrain n'a pas encore de filleuls</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des filleuls directs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-custom">
+                <div class="card-header bg-white border-0 py-3">
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-list-ul"></i> Filleuls Directs de {{ current_profile.user.username }}
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    {% if referrals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: var(--secondary-color); color: white;">
+                                <tr>
+                                    <th class="py-3 px-4">#</th>
+                                    <th class="py-3 px-4">Nom d'utilisateur</th>
+                                    <th class="py-3 px-4">Code de parrainage</th>
+                                    <th class="py-3 px-4">Date d'inscription</th>
+                                    <th class="py-3 px-4">Montant payé</th>
+                                    <th class="py-3 px-4">Progression</th>
+                                    <th class="py-3 px-4">Statut</th>
+                                    <th class="py-3 px-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for referral in referrals %}
+                                <tr>
+                                    <td class="py-3 px-4">{{ forloop.counter }}</td>
+                                    <td class="py-3 px-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                 style="width: 40px; height: 40px; font-weight: bold;">
+                                                {{ referral.user.username|slice:":2"|upper }}
+                                            </div>
+                                            <strong>{{ referral.user.username }}</strong>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="badge bg-light text-dark">{{ referral.referral_code }}</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <small class="text-muted">{{ referral.user.date_joined|date:"d/m/Y" }}</small>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <strong class="text-primary">{{ referral.total_paid|floatformat:0 }} FCFA</strong>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="progress" style="width: 100px; height: 8px;">
+                                            <div class="progress-bar {% if referral.progress_percent >= 100 %}bg-success{% elif referral.progress_percent >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                                 role="progressbar"
+                                                 style="width: {{ referral.progress_percent }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ referral.progress_percent|floatformat:1 }}%</small>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        {% if referral.is_vip %}
+                                        <span class="badge-vip">
+                                            <i class="bi bi-check-circle-fill"></i> VIP
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-clock"></i> En cours
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <a href="{% url 'view_child_detail' referral.pk %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> Voir
+                                        </a>
+                                        <a href="{% url 'view_parrain_tree' referral.pk %}" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-diagram-3"></i> Ses enfants
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-people" style="font-size: 5rem; color: #e2e8f0;"></i>
+                        <h4 class="text-muted mt-3">Aucun filleul direct</h4>
+                        <p class="text-muted mb-4">Ce parrain n'a pas encore de filleuls directs</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tree-view {
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 12px;
+        overflow-x: auto;
+    }
+
+    .tree-node {
+        margin: 10px 0;
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .tree-node:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+
+    .tree-node.level-1 {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .tree-node.level-2 {
+        border-left: 4px solid #6366f1;
+        margin-left: 30px;
+    }
+
+    .tree-node.level-3 {
+        border-left: 4px solid #10b981;
+        margin-left: 60px;
+    }
+
+    .tree-node.level-4,
+    .tree-node.level-5,
+    .tree-node.level-6,
+    .tree-node.level-7,
+    .tree-node.level-8,
+    .tree-node.level-9,
+    .tree-node.level-10 {
+        border-left: 4px solid #f59e0b;
+        margin-left: 90px;
+    }
+
+    .tree-children {
+        margin-top: 10px;
+        padding-left: 20px;
+        border-left: 2px dashed #e2e8f0;
+    }
+
+    .tree-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .tree-user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .tree-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .tree-stats {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .tree-stat {
+        text-align: center;
+        padding: 5px 10px;
+        background: #f1f5f9;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+
+    .tree-stat strong {
+        display: block;
+        font-size: 1rem;
+    }
+
+    .tree-stat small {
+        color: #64748b;
+    }
+
+    .tree-node-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .tree-node-link:hover .tree-user-info h5 {
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}

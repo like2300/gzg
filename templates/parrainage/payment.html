@@ -1,0 +1,119 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}Paiement - GZG{% endblock %}
+
+{% block content %}
+<div class="slide-up">
+    <!-- En-tête -->
+    <div class="mb-4">
+        <a href="{% url 'dashboard' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-arrow-left"></i>
+            <span>Retour</span>
+        </a>
+        <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">
+            <i class="bi bi-wallet2" style="color: var(--primary-color);"></i>
+            Paiement
+        </h2>
+        <p class="text-secondary mb-0">Ajoutez un paiement à votre compte</p>
+    </div>
+
+    <!-- Résumé -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-body">
+            <div class="row g-3 text-center">
+                <div class="col-4">
+                    <div class="p-2" style="background: rgba(220, 38, 38, 0.08); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block" style="font-size: 0.75rem;">Déjà payé</small>
+                        <strong style="color: var(--primary-color); font-size: 1.1rem;">{{ profile.total_paid|floatformat:0 }}</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2" style="background: rgba(30, 41, 59, 0.08); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block" style="font-size: 0.75rem;">Objectif</small>
+                        <strong style="font-size: 1.1rem;">{{ quota|floatformat:0 }}</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2" style="background: rgba(16, 185, 129, 0.08); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block" style="font-size: 0.75rem;">Reste</small>
+                        <strong style="color: var(--success-color); font-size: 1.1rem;">{{ profile.remaining_amount|floatformat:0 }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-modern mt-3">
+                <div class="progress-modern-bar" 
+                     style="width: {{ profile.progress_percent }}%; 
+                            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));">
+                </div>
+            </div>
+            <div class="text-center mt-2">
+                <small class="text-secondary">{{ profile.progress_percent|floatformat:1 }}% complété</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card-mobile mb-4">
+            <div class="card-mobile-header">
+                <h6 class="fw-bold mb-0">
+                    <i class="bi bi-cash-stack" style="color: var(--primary-color);"></i>
+                    Montant
+                </h6>
+            </div>
+            <div class="card-mobile-body">
+                <div class="input-group-modern">
+                    <div class="input-group-icon">
+                        <i class="bi bi-currency-exchange"></i>
+                    </div>
+                    <input type="number"
+                           class="input-group-input"
+                           id="amount"
+                           name="amount"
+                           required
+                           min="1"
+                           step="0.01"
+                           placeholder="Ex: 10000"
+                           autofocus>
+                </div>
+                <small class="text-secondary mt-2 d-block">
+                    <i class="bi bi-info-circle"></i> Montant minimum: 1 FCFA
+                </small>
+            </div>
+        </div>
+
+        <div class="card-mobile mb-4">
+            <div class="card-mobile-header">
+                <h6 class="fw-bold mb-0">
+                    <i class="bi bi-receipt" style="color: var(--primary-color);"></i>
+                    Référence
+                </h6>
+            </div>
+            <div class="card-mobile-body">
+                <div class="input-group-modern">
+                    <div class="input-group-icon">
+                        <i class="bi bi-hash"></i>
+                    </div>
+                    <input type="text"
+                           class="input-group-input"
+                           id="reference"
+                           name="reference"
+                           required
+                           placeholder="Ex: MM123456789"
+                           maxlength="100">
+                </div>
+                <small class="text-secondary mt-2 d-block">
+                    <i class="bi bi-info-circle"></i> ID de transaction Mobile Money
+                </small>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mb-3">
+            <i class="bi bi-check-circle"></i>
+            Valider le paiement
+        </button>
+    </form>
+</div>
+{% endblock %}

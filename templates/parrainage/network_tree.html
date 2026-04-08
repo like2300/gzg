@@ -1,0 +1,570 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}Arbre de {{ root_profile.user.username }} - GZG{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Network Tree Styles */
+    .network-tree-container {
+        padding-bottom: 100px;
+    }
+
+    /* Modern Header Card */
+    .network-header-modern {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        border-radius: 24px;
+        padding: 1.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(220, 38, 38, 0.3);
+        margin-bottom: 1.5rem;
+    }
+
+    .network-header-modern::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Modern Breadcrumb */
+    .breadcrumb-modern {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+    }
+
+    .breadcrumb-link-modern {
+        color: rgba(255,255,255,0.9);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+    }
+
+    .breadcrumb-link-modern:hover {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+
+    .breadcrumb-separator {
+        color: rgba(255,255,255,0.6);
+        font-size: 0.75rem;
+    }
+
+    .breadcrumb-current {
+        font-weight: 700;
+        color: white;
+    }
+
+    /* Profile Info */
+    .profile-info-modern {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .profile-avatar-large {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        font-size: 1.5rem;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+    }
+
+    .profile-details h3 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0 0 0.25rem 0;
+        color: white;
+    }
+
+    .profile-status {
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.9);
+    }
+
+    /* Stats Row - Horizontal Scroll */
+    .stats-row-modern {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .stats-row-modern::-webkit-scrollbar {
+        display: none;
+    }
+
+    .stat-card-modern-small {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        text-align: center;
+        min-width: 100px;
+        scroll-snap-align: center;
+        flex: 0 0 auto;
+    }
+
+    .stat-value-modern {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
+        line-height: 1;
+    }
+
+    .stat-label-modern {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.8);
+        margin-top: 0.25rem;
+        font-weight: 500;
+    }
+
+    /* Tree Nodes */
+    .tree-nodes-container {
+        position: relative;
+    }
+
+    .node-wrapper {
+        margin-bottom: 0.75rem;
+    }
+
+    .network-node-modern {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 4px solid #dc2626;
+        position: relative;
+    }
+
+    .network-node-modern:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .network-node-modern.vip {
+        border-left-color: #f59e0b;
+        background: linear-gradient(90deg, rgba(245, 158, 11, 0.05), white);
+    }
+
+    .node-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+
+    .node-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .node-name {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .node-stats {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .node-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-weight: 500;
+    }
+
+    .node-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .node-action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .node-action-btn:active {
+        transform: scale(0.9);
+    }
+
+    .node-action-btn.expand {
+        background: #dc2626;
+        color: white;
+    }
+
+    /* Children Container */
+    .children-container-modern {
+        margin-left: 2rem;
+        padding-left: 1rem;
+        border-left: 2px dashed #e2e8f0;
+        margin-top: 0.75rem;
+        display: none;
+    }
+
+    .children-container-modern.show {
+        display: block;
+    }
+
+    /* VIP Badge */
+    .vip-badge-small {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    /* Empty State */
+    .empty-state-tree {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+
+    .empty-state-tree-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #dc2626;
+    }
+
+    .empty-state-tree-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-tree-text {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    /* Info Banner */
+    .info-banner-modern {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .info-banner-text {
+        font-size: 0.8rem;
+        color: #6366f1;
+        font-weight: 500;
+    }
+
+    /* Animations */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .slide-down {
+        animation: slideDown 0.3s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="network-tree-container slide-up">
+    
+    <!-- Modern Header Card -->
+    <div class="network-header-modern">
+        <div class="header-content">
+            <!-- Back Button -->
+            <a href="{% url 'my_referrals' %}" class="breadcrumb-link-modern d-inline-flex align-items-center gap-2 mb-3" style="display: inline-flex !important;">
+                <i class="bi bi-arrow-left"></i>
+                <span>Retour</span>
+            </a>
+
+            <!-- Modern Breadcrumb -->
+            <div class="breadcrumb-modern">
+                {% for crumb in breadcrumbs %}
+                    {% if forloop.last %}
+                    <span class="breadcrumb-current">{{ crumb.user.username }}</span>
+                    {% else %}
+                    <a href="{% url 'network_tree_pk' crumb.pk %}" class="breadcrumb-link-modern">{{ crumb.user.username }}</a>
+                    <span class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Profile Info -->
+            <div class="profile-info-modern">
+                <div class="profile-avatar-large">
+                    {{ root_profile.user.username|slice:":2"|upper }}
+                </div>
+                <div class="profile-details">
+                    <h3>{{ root_profile.user.username }}</h3>
+                    <div class="profile-status">
+                        {% if root_profile.is_vip %}
+                        <span class="vip-badge-small">
+                            <i class="bi bi-star-fill"></i> VIP
+                        </span>
+                        {% else %}
+                        <span>{{ root_profile.progress_percent|floatformat:0 }}% VIP</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row-modern">
+                <div class="stat-card-modern-small">
+                    <div class="stat-value-modern">{{ root_profile.referrals.count }}</div>
+                    <div class="stat-label-modern">Filleuls</div>
+                </div>
+                <div class="stat-card-modern-small">
+                    <div class="stat-value-modern" style="color: #10b981;">{{ root_profile.total_paid|floatformat:0 }}</div>
+                    <div class="stat-label-modern">FCFA</div>
+                </div>
+                <div class="stat-card-modern-small">
+                    <div class="stat-value-modern" style="color: #6366f1;">{{ total_downline }}</div>
+                    <div class="stat-label-modern">Réseau</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Banner -->
+    {% if children %}
+    <div class="info-banner-modern">
+        <i class="bi bi-info-circle-fill"></i>
+        <span class="info-banner-text">Appuyez sur <strong>→</strong> pour afficher/masquer les enfants</span>
+    </div>
+    {% endif %}
+
+    <!-- Tree Nodes Container -->
+    <div class="tree-nodes-container">
+        {% if children %}
+            {% for child in children %}
+            <div class="node-wrapper">
+                <!-- Parent Node -->
+                <div class="network-node-modern {% if child.profile.is_vip %}vip{% endif %}"
+                     onclick="window.location.href='{% url 'network_tree_pk' child.profile.pk %}'">
+                    <button class="node-action-btn expand" onclick="event.stopPropagation(); toggleChildren('child-{{ child.profile.pk }}', this)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+
+                    <div class="node-avatar" style="background: linear-gradient(135deg, {% if child.profile.is_vip %}#f59e0b, #d97706{% else %}#6366f1, #4f46e5{% endif %});">
+                        {{ child.profile.user.username|slice:":2"|upper }}
+                    </div>
+
+                    <div class="node-info">
+                        <div class="node-name">{{ child.profile.user.username }}</div>
+                        <div class="node-stats">
+                            <span class="node-stat">
+                                <i class="bi bi-people"></i>
+                                {{ child.children|length }}
+                            </span>
+                            <span class="node-stat">
+                                <i class="bi bi-wallet2"></i>
+                                {{ child.profile.total_paid|floatformat:0 }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if child.profile.is_vip %}
+                    <span class="vip-badge-small">
+                        <i class="bi bi-star-fill"></i>
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Children Container -->
+                <div id="child-{{ child.profile.pk }}" class="children-container-modern">
+                    {% if child.children %}
+                        {% for grandchild in child.children %}
+                        <div class="node-wrapper">
+                            <div class="network-node-modern {% if grandchild.profile.is_vip %}vip{% endif %}"
+                                 onclick="window.location.href='{% url 'network_tree_pk' grandchild.profile.pk %}'"
+                                 style="border-left-color: {% if grandchild.profile.is_vip %}#f59e0b{% else %}#10b981{% endif %};">
+                                <button class="node-action-btn expand" onclick="event.stopPropagation(); toggleChildren('grandchild-{{ grandchild.profile.pk }}', this)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+
+                                <div class="node-avatar" style="width: 40px; height: 40px; font-size: 0.85rem; background: linear-gradient(135deg, {% if grandchild.profile.is_vip %}#f59e0b, #d97706{% else %}#10b981, #059669{% endif %});">
+                                    {{ grandchild.profile.user.username|slice:":2"|upper }}
+                                </div>
+
+                                <div class="node-info">
+                                    <div class="node-name" style="font-size: 0.9rem;">{{ grandchild.profile.user.username }}</div>
+                                    <div class="node-stats">
+                                        <span class="node-stat">
+                                            <i class="bi bi-people"></i>
+                                            {{ grandchild.children|length }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {% if grandchild.profile.is_vip %}
+                                <span class="vip-badge-small">
+                                    <i class="bi bi-star-fill"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Great-grandchildren -->
+                            <div id="grandchild-{{ grandchild.profile.pk }}" class="children-container-modern" style="margin-left: 1.5rem;">
+                                {% for greatgrandchild in grandchild.children %}
+                                <div class="network-node-modern {% if greatgrandchild.profile.is_vip %}vip{% endif %}"
+                                     onclick="window.location.href='{% url 'network_tree_pk' greatgrandchild.profile.pk %}'"
+                                     style="border-left-color: {% if greatgrandchild.profile.is_vip %}#f59e0b{% else %}#8b5cf6{% endif %};">
+                                    <div class="node-avatar" style="width: 36px; height: 36px; font-size: 0.75rem; background: linear-gradient(135deg, {% if greatgrandchild.profile.is_vip %}#f59e0b, #d97706{% else %}#8b5cf6, #7c3aed{% endif %});">
+                                        {{ greatgrandchild.profile.user.username|slice:":2"|upper }}
+                                    </div>
+
+                                    <div class="node-info">
+                                        <div class="node-name" style="font-size: 0.85rem;">{{ greatgrandchild.profile.user.username }}</div>
+                                    </div>
+
+                                    {% if greatgrandchild.profile.is_vip %}
+                                    <span class="vip-badge-small">
+                                        <i class="bi bi-star-fill"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="empty-state-tree" style="padding: 1.5rem;">
+                        <p style="color: #94a3b8; font-size: 0.85rem;">Aucun enfant</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state-tree">
+            <div class="empty-state-tree-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h6 class="empty-state-tree-title">Aucun enfant</h6>
+            <p class="empty-state-tree-text">
+                {{ root_profile.user.username }} n'a pas encore de filleuls
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleChildren(id, btn) {
+    const container = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    
+    if (container.classList.contains('show')) {
+        container.classList.remove('show');
+        icon.classList.remove('bi-chevron-down');
+        icon.classList.add('bi-chevron-right');
+    } else {
+        container.classList.add('show');
+        icon.classList.remove('bi-chevron-right');
+        icon.classList.add('bi-chevron-down');
+    }
+}
+</script>
+{% endblock %}

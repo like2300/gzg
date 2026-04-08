@@ -1,0 +1,163 @@
+{% extends 'parrainage/admin/admin_base.html' %}
+
+{% block title %}Tous les réseaux - Administration{% endblock %}
+
+{% block content %}
+<!-- Admin All Networks Page -->
+<section class="animate-slide-up">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Tous les réseaux</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">{{ total_networks }} réseaux ({{ vip_count }} VIP)</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'admin_dashboard' %}" class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Retour</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 mb-6">
+        <div class="flex flex-wrap gap-4 items-center">
+            <div class="relative flex-1 min-w-[200px]">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-400"></i>
+                <input type="text" name="search" placeholder="Rechercher (nom, email, code...)" value="{{ search }}" 
+                    class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white">
+            </div>
+            <select name="status" class="px-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                <option value="">Tous les statuts</option>
+                <option value="vip" {% if status == 'vip' %}selected{% endif %}>VIP</option>
+                <option value="non_vip" {% if status == 'non_vip' %}selected{% endif %}>Non VIP</option>
+            </select>
+            <button type="submit" class="px-6 py-2 bg-primary hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i>
+                Filtrer
+            </button>
+            <a href="{% url 'admin_all_networks' %}" class="px-6 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                Reset
+            </a>
+        </div>
+    </form>
+
+    <!-- Networks Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for profile in profiles %}
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-shadow">
+            <!-- Card Header -->
+            <div class="p-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br {% if profile.is_vip %}from-yellow-400 to-orange-500{% else %}from-primary to-red-800{% endif %} flex items-center justify-center text-white font-bold">
+                        {{ profile.user.username|slice:":2"|upper }}
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800 dark:text-white">{{ profile.user.username }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ profile.user.email|truncatechars:20 }}</p>
+                    </div>
+                </div>
+                {% if profile.is_vip %}
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                    <i data-lucide="crown" class="w-3 h-3 inline"></i> VIP
+                </span>
+                {% else %}
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-slate-600 dark:text-gray-300">
+                    {{ profile.progress_percent|floatformat:0 }}%
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-4 space-y-3">
+                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <i data-lucide="code" class="w-4 h-4 text-gray-400"></i>
+                    <code class="text-xs bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded">{{ profile.referral_code }}</code>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="text-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                        <div class="text-lg font-bold text-gray-800 dark:text-white">{{ profile.referrals.count }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Filleuls</div>
+                    </div>
+                    <div class="text-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                        <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ profile.total_paid|floatformat:0 }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">FCFA</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-500 dark:text-gray-400">Progression VIP</span>
+                        <span class="font-semibold text-gray-700 dark:text-gray-200">{{ profile.progress_percent|floatformat:0 }}%</span>
+                    </div>
+                    <div class="h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary rounded-full" style="width: {{ profile.progress_percent }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Parrain -->
+                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                    <span>Parrain:</span>
+                    {% if profile.referrer %}
+                    <a href="{% url 'admin_network_tree' profile.referrer.pk %}" class="text-primary dark:text-red-400 hover:underline font-medium">
+                        {{ profile.referrer.user.username }}
+                    {% else %}
+                    <span class="text-gray-400">Aucun</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="p-4 border-t border-gray-100 dark:border-slate-700 flex gap-2">
+                <a href="{% url 'admin_user_detail' profile.pk %}" 
+                    class="flex-1 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm flex items-center justify-center gap-2">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                    Profil
+                </a>
+                <a href="{% url 'admin_network_tree' profile.pk %}" 
+                    class="flex-1 px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg font-medium hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-sm flex items-center justify-center gap-2">
+                    <i data-lucide="git-branch" class="w-4 h-4"></i>
+                    Réseau
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full flex flex-col items-center justify-center py-12 text-center">
+            <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                <i data-lucide="users" class="w-12 h-12 text-gray-400"></i>
+            </div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Aucun réseau trouvé</h4>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Essayez de modifier vos filtres de recherche</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if profiles.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <div class="flex gap-2">
+            {% if profiles.has_previous %}
+            <a href="?page={{ profiles.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
+                class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors font-medium">
+                Précédent
+            </a>
+            {% endif %}
+
+            <span class="px-4 py-2 text-gray-500 dark:text-gray-400">
+                Page {{ profiles.number }} sur {{ profiles.paginator.num_pages }}
+            </span>
+
+            {% if profiles.has_next %}
+            <a href="?page={{ profiles.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
+                class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-red-700 transition-colors font-medium">
+                Suivant
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,790 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}Tableau de bord - GZG{% endblock %}
+{% load static %}
+{% block extra_css %}
+<style>
+    /* Modern Dashboard Styles */
+    .dashboard-container {
+        padding-bottom: 100px;
+    }
+
+    /* Welcome Card */
+    .welcome-card {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        border-radius: 24px;
+        padding: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(220, 38, 38, 0.3);
+        margin-bottom: 1.5rem;
+    }
+
+    .welcome-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    .welcome-card::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 150px;
+        height: 150px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Stats Cards - Horizontal Scroll */
+    .stats-grid {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 0.5rem;
+        scroll-padding: 0.5rem;
+        position: relative;
+    }
+
+    .stats-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Scroll indicator */
+    .stats-grid::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 100%;
+        background: linear-gradient(to right, transparent, rgba(248, 250, 252, 0.8));
+        pointer-events: none;
+        border-radius: 0 16px 16px 0;
+    }
+
+    .stat-card-modern {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        scroll-snap-align: center;
+        flex: 0 0 calc(50% - 12px);
+        min-width: 140px;
+    }
+
+    .stat-card-modern:active {
+        transform: scale(0.98);
+    }
+
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon-paid {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+    }
+
+    .stat-icon-target {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+    }
+
+    .stat-icon-remaining {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+
+    /* Progress Card */
+    .progress-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+
+    .circular-progress-modern {
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+        transition: stroke-dashoffset 1s ease-in-out;
+    }
+
+    .progress-ring-bg {
+        stroke: #e2e8f0;
+    }
+
+    .progress-ring-fill {
+        stroke: url(#gradient);
+        stroke-linecap: round;
+    }
+
+    .progress-center-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .progress-percentage {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .progress-status {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+
+    /* VIP Status Banner */
+    .vip-banner {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border-radius: 16px;
+        padding: 1.25rem;
+        text-align: center;
+        color: white;
+        margin-top: 1rem;
+        box-shadow: 0 8px 30px rgba(245, 158, 11, 0.3);
+    }
+
+    .vip-banner-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    /* Section Cards */
+    .section-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1rem;
+    }
+
+    .section-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-link {
+        font-size: 0.85rem;
+        color: #dc2626;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .section-body {
+        padding: 0;
+    }
+
+    /* List Items */
+    .modern-list-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.2s;
+    }
+
+    .modern-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .modern-list-item:hover {
+        background: #f8fafc;
+    }
+
+    .list-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+    }
+
+    .list-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .list-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .list-subtitle {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .list-action {
+        flex-shrink: 0;
+        margin-left: 1rem;
+    }
+
+    .vip-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .progress-badge {
+        background: #f1f5f9;
+        color: #64748b;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    /* Empty State */
+    .empty-state-modern {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #dc2626;
+    }
+
+    /* Quick Actions - Horizontal Scroll */
+    .quick-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 0.5rem;
+        scroll-padding: 0.5rem;
+        position: relative;
+    }
+
+    .quick-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Scroll indicator */
+    .quick-actions::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 100%;
+        background: linear-gradient(to right, transparent, rgba(248, 250, 252, 0.8));
+        pointer-events: none;
+        border-radius: 0 16px 16px 0;
+    }
+
+    .quick-action-btn {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        text-align: center;
+        text-decoration: none;
+        color: #1e293b;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        scroll-snap-align: center;
+        flex: 0 0 calc(50% - 12px);
+        min-width: 140px;
+    }
+
+    .quick-action-btn:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .quick-action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .quick-action-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Animations */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+
+    /* Modal Profil Incomplet */
+    .modal-custom {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content-custom {
+        background: white;
+        border-radius: 24px 24px 0 0;
+        width: 100%;
+        max-width: 500px;
+        max-height: 85vh;
+        overflow-y: auto;
+        animation: slideUpModal 0.3s ease-out;
+    }
+
+    @keyframes slideUpModal {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header-custom {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+        color: #1e293b;
+    }
+
+    .modal-body-custom {
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container slide-up">
+
+    <!-- Welcome Card -->
+    <div class="welcome-card">
+        <div class="welcome-content">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="mb-1 opacity-75" style="font-size: 0.9rem;">Bonjour 👋</p>
+                    <h1 class="fw-bold mb-0" style="font-size: 1.5rem;">{{ user.username }}</h1>
+                </div>
+                {% if profile.is_vip %}
+                <div class="vip-badge" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);">
+                    <i class="bi bi-star-fill"></i> VIP
+                </div>
+                {% else %}
+                <div class="progress-badge" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white;">
+                    <i class="bi bi-clock"></i> En cours
+                </div>
+                {% endif %}
+            </div>
+
+            {% if profile.is_vip %}
+            <p class="mb-0 opacity-75" style="font-size: 0.85rem;">
+                <i class="bi bi-check-circle-fill"></i> Statut VIP activé
+            </p>
+            {% else %}
+            <p class="mb-0 opacity-75" style="font-size: 0.85rem;">
+                Objectif : <strong>{{ quota|floatformat:0 }} FCFA</strong>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+        <h6 class="fw-bold mb-0" style="color: #1e293b; font-size: 0.95rem;">
+            <i class="bi bi-grid-3x3-gap-fill" style="color: #dc2626;"></i>
+            Actions rapides
+        </h6>
+        <span class="text-muted" style="font-size: 0.75rem;">
+            <i class="bi bi-chevron-double-right"></i> Glissez pour voir plus
+        </span>
+    </div>
+
+    <div class="quick-actions">
+        <a href="{% url 'make_payment' %}" class="quick-action-btn">
+            <div class="quick-action-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <span class="quick-action-label">Payer</span>
+        </a>
+        <a href="{% url 'my_referrals' %}" class="quick-action-btn">
+            <div class="quick-action-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <span class="quick-action-label">Réseau</span>
+        </a>
+        <a href="{% url 'network_tree' %}" class="quick-action-btn">
+            <div class="quick-action-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="bi bi-diagram-3-fill"></i>
+            </div>
+            <span class="quick-action-label">Arbre</span>
+        </a>
+        <a href="{% url 'profile' %}" class="quick-action-btn">
+            <div class="quick-action-icon" style="background: linear-gradient(135deg, #dc2626, #991b1b);">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <span class="quick-action-label">Profil</span>
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+        <h6 class="fw-bold mb-0" style="color: #1e293b; font-size: 0.95rem;">
+            <i class="bi bi-bar-chart-fill" style="color: #dc2626;"></i>
+            Statistiques
+        </h6>
+        <span class="text-muted" style="font-size: 0.75rem;">
+            <i class="bi bi-chevron-double-right"></i> Glissez pour voir plus
+        </span>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card-modern">
+            <div class="stat-icon-wrapper stat-icon-paid">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <div class="stat-value">{{ profile.total_paid|floatformat:0 }}</div>
+            <div class="stat-label">Payé</div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-icon-wrapper stat-icon-target">
+                <i class="bi bi-bullseye"></i>
+            </div>
+            <div class="stat-value">{{ quota|floatformat:0 }}</div>
+            <div class="stat-label">Objectif</div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-icon-wrapper stat-icon-remaining">
+                <i class="bi bi-piggy-bank"></i>
+            </div>
+            <div class="stat-value">{{ profile.remaining_amount|floatformat:0 }}</div>
+            <div class="stat-label">Reste</div>
+        </div>
+    </div>
+
+    <!-- Progress Card -->
+    <div class="progress-card">
+        <h5 class="fw-bold mb-4 text-center">
+            <i class="bi bi-graph-up" style="color: #dc2626;"></i>
+            Progression VIP
+        </h5>
+
+        <div class="circular-progress-modern mb-4">
+            <svg class="progress-ring" width="180" height="180">
+                <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <circle class="progress-ring-bg" stroke-width="12" fill="transparent" r="70" cx="90" cy="90"/>
+                <circle class="progress-ring-fill" stroke-width="12" fill="transparent" r="70" cx="90" cy="90"
+                    style="stroke-dasharray: 440; stroke-dashoffset: {{ stroke_dashoffset }}"/>
+            </svg>
+            <div class="progress-center-content">
+                <div class="progress-percentage">{{ profile.progress_percent|floatformat:1 }}%</div>
+                <div class="progress-status">
+                    {% if profile.is_vip %}
+                    <span style="color: #10b981;"><i class="bi bi-check-circle-fill"></i> VIP</span>
+                    {% else %}
+                    En cours
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if profile.is_vip %}
+        <div class="vip-banner">
+            <div class="vip-banner-icon">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <p class="fw-bold mb-0">Félicitations ! Vous êtes VIP</p>
+            <p class="mb-0" style="font-size: 0.8rem; opacity: 0.9;">Accès complet aux marchés</p> <br> <br>
+            <p class="mb-2" style="font-size: 0.8rem; opacity: 0.9;">
+                Télécharge le plan d'affaire
+            </p>
+            <a class="bg-white  m-2 p-2 text-black  rounded-full text-decoration-none" href="{% static 'fils/TABLEAU DES GAINS ACTUELS.pdf' %}">Télécharge</a>
+        </div>
+        {% else %}
+        <div class="p-3" style="background: rgba(245, 158, 11, 0.1); border-radius: 16px; text-align: center;">
+            <i class="bi bi-info-circle-fill" style="color: #f59e0b; font-size: 2rem;"></i>
+            <p class="fw-bold mb-1 mt-2" style="color: #d97706;">
+                Il reste {{ profile.remaining_amount|floatformat:0 }} FCFA
+            </p>
+            <p class="mb-0" style="font-size: 0.8rem; color: #64748b;">pour devenir VIP</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Referrals Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h5 class="section-title">
+                <i class="bi bi-people-fill" style="color: #6366f1;"></i>
+                Filleuls ({{ profile.referrals.count }})
+            </h5>
+            <a href="{% url 'my_referrals' %}" class="section-link">
+                Voir tout <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+        <div class="section-body">
+            {% if referrals %}
+                {% for referral in referrals|slice:":5" %}
+                <div class="modern-list-item">
+                    <div class="list-avatar" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                        {{ referral.user.username|slice:":2"|upper }}
+                    </div>
+                    <div class="list-content">
+                        <div class="list-title">{{ referral.user.username }}</div>
+                        <div class="list-subtitle">{{ referral.total_paid|floatformat:0 }} FCFA</div>
+                    </div>
+                    <div class="list-action">
+                        {% if referral.is_vip %}
+                        <span class="vip-badge">
+                            <i class="bi bi-star-fill"></i> VIP
+                        </span>
+                        {% else %}
+                        <span class="progress-badge">{{ referral.progress_percent|floatformat:0 }}%</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state-modern">
+                <div class="empty-state-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <p class="mb-0" style="color: #64748b; font-size: 0.9rem;">Aucun filleul pour le moment</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Payments Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h5 class="section-title">
+                <i class="bi bi-receipt" style="color: #10b981;"></i>
+                Paiements récents
+            </h5>
+        </div>
+        <div class="section-body">
+            {% if payments %}
+                {% for payment in payments|slice:":5" %}
+                <div class="modern-list-item">
+                    <div class="list-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div class="list-content">
+                        <div class="list-title">{{ payment.reference|truncatechars:20 }}</div>
+                        <div class="list-subtitle">{{ payment.date_created|date:"d/m/yyyy" }}</div>
+                    </div>
+                    <div class="list-action">
+                        <span class="fw-bold" style="color: #10b981; font-size: 0.95rem;">
+                            +{{ payment.amount|floatformat:0 }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state-modern">
+                <div class="empty-state-icon">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <p class="mb-0" style="color: #64748b; font-size: 0.9rem;">Aucun paiement enregistré</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Profil Incomplet -->
+<div id="incompleteProfileModal" class="modal-custom" style="display: none;">
+    <div class="modal-content-custom">
+        <div class="modal-header-custom">
+            <h3 class="modal-title">
+                <i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color);"></i>
+                Profil Incomplet
+            </h3>
+        </div>
+        <div class="modal-body-custom text-center">
+            <div style="width: 80px; height: 80px; background: rgba(245, 158, 11, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <i class="bi bi-person-badge" style="font-size: 2.5rem; color: var(--warning-color);"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Complétez votre profil</h5>
+            <p class="text-secondary mb-3" style="font-size: 0.9rem;">
+                Pour accéder à votre lien de parrainage et QR code, vous devez d'abord ajouter votre <strong>numéro de téléphone</strong> et votre <strong>pays de résidence</strong>.
+            </p>
+            <a href="{% url 'profile' %}" class="btn btn-primary w-100">
+                <i class="bi bi-pencil"></i>
+                Compléter mon profil
+            </a>
+            <button class="btn btn-outline-secondary w-100 mt-2" onclick="closeIncompleteProfileModal()">
+                <i class="bi bi-x-lg"></i>
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Vérifier si le profil est complet au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    {% if not is_profile_complete %}
+    // Ouvrir le modal automatiquement si le profil n'est pas complet
+    setTimeout(() => {
+        document.getElementById('incompleteProfileModal').style.display = 'flex';
+    }, 500);
+    {% endif %}
+});
+
+function closeIncompleteProfileModal() {
+    document.getElementById('incompleteProfileModal').style.display = 'none';
+}
+</script>
+{% endblock %}

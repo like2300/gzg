@@ -1,0 +1,262 @@
+{% extends 'parrainage/admin/admin_base.html' %}
+
+{% block title %}Nouveau Paiement - Administration{% endblock %}
+
+{% block content %}
+<!-- New Payment Page -->
+<section class="animate-slide-up">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Nouveau Paiement</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Enregistrer un paiement pour un utilisateur</p>
+        </div>
+        <a href="{% url 'admin_payments' %}" class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Retour</span>
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 max-w-2xl">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- User Selection with Search -->
+            <div>
+                <label for="userSearch" class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <i data-lucide="user-search" class="w-4 h-4 inline mr-1"></i>
+                    Rechercher un utilisateur
+                </label>
+                
+                <!-- Search Input -->
+                <div class="relative">
+                    <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i data-lucide="search" class="w-5 h-5"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="userSearch" 
+                        class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-sm transition-all"
+                        placeholder="Tapez pour rechercher (nom, email, code)..."
+                    >
+                </div>
+
+                <!-- Selected User Display -->
+                <div id="selectedUserDisplay" class="hidden mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-red-800 flex items-center justify-center text-white font-bold text-sm">
+                            <span id="selectedUserAvatar"></span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800 dark:text-white text-sm" id="selectedUserName"></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400" id="selectedUserEmail"></p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="clearUserSelection()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Hidden Select for Form Submission -->
+                <select name="user_id" id="user_id" required class="hidden">
+                    <option value="">Sélectionner un utilisateur...</option>
+                    {% for user in users %}
+                    <option value="{{ user.pk }}" 
+                        data-username="{{ user.username }}" 
+                        data-email="{{ user.email }}" 
+                        data-code="{{ user.profile.referral_code|default:'' }}"
+                        data-avatar="{{ user.username|slice:':2'|upper }}">
+                        {{ user.username }} - {{ user.email }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <!-- Search Results Dropdown -->
+                <div id="searchResults" class="hidden mt-2 max-h-64 overflow-y-auto bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg">
+                    <div id="resultsList" class="divide-y divide-gray-100 dark:divide-slate-700">
+                        <!-- Results will be populated here -->
+                    </div>
+                    <div id="noResults" class="hidden p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                        <i data-lucide="user-x" class="w-8 h-8 inline mb-2 opacity-50"></i>
+                        <p>Aucun utilisateur trouvé</p>
+                    </div>
+                </div>
+
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                    Recherchez par nom d'utilisateur, email ou code de parrainage
+                </p>
+            </div>
+
+            <!-- Amount -->
+            <div>
+                <label for="amount" class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <i data-lucide="banknote" class="w-4 h-4 inline mr-1"></i>
+                    Montant (FCFA)
+                </label>
+                <input type="number" name="amount" id="amount" required min="1" step="any" 
+                    class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-sm transition-all" 
+                    placeholder="Ex: 50000">
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Entrez le montant du paiement en FCFA</p>
+            </div>
+
+            <!-- Reference -->
+            <div>
+                <label for="reference" class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <i data-lucide="hash" class="w-4 h-4 inline mr-1"></i>
+                    Référence
+                </label>
+                <input type="text" name="reference" id="reference" required 
+                    class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-sm transition-all font-mono" 
+                    placeholder="Ex: PAY-2024-001">
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">ID unique de la transaction (Mobile Money, etc.)</p>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-3 pt-4 border-t border-gray-100 dark:border-slate-700">
+                <a href="{% url 'admin_payments' %}" 
+                    class="px-6 py-3 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors text-sm">
+                    Annuler
+                </a>
+                <button type="submit" 
+                    class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all shadow-lg shadow-green-900/20 flex items-center justify-center gap-2 text-sm">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    Enregistrer le paiement
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Card -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6 max-w-2xl mt-6">
+        <div class="flex items-start gap-3">
+            <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+            <div>
+                <h4 class="font-semibold text-blue-800 dark:text-blue-200 text-sm mb-1">Informations importantes</h4>
+                <ul class="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Le statut VIP sera automatiquement mis à jour si le quota est atteint</li>
+                    <li>• La référence doit être unique pour chaque paiement</li>
+                    <li>• Vérifiez les informations avant de valider le paiement</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('userSearch');
+    const searchResults = document.getElementById('searchResults');
+    const resultsList = document.getElementById('resultsList');
+    const noResults = document.getElementById('noResults');
+    const userSelect = document.getElementById('user_id');
+    const selectedUserDisplay = document.getElementById('selectedUserDisplay');
+    
+    // Get all users from the hidden select
+    const allUsers = Array.from(userSelect.options).slice(1).map(option => ({
+        id: option.value,
+        username: option.dataset.username,
+        email: option.dataset.email,
+        code: option.dataset.code,
+        avatar: option.dataset.avatar
+    }));
+    
+    // Search function
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        
+        if (query.length === 0) {
+            searchResults.classList.add('hidden');
+            return;
+        }
+        
+        // Filter users by username, email, or code
+        const filteredUsers = allUsers.filter(user => 
+            user.username.toLowerCase().includes(query) ||
+            user.email.toLowerCase().includes(query) ||
+            user.code.toLowerCase().includes(query)
+        );
+        
+        // Display results
+        if (filteredUsers.length === 0) {
+            resultsList.innerHTML = '';
+            noResults.classList.remove('hidden');
+            searchResults.classList.remove('hidden');
+        } else {
+            noResults.classList.add('hidden');
+            resultsList.innerHTML = filteredUsers.map(user => `
+                <div class="p-3 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors" 
+                     onclick="selectUser('${user.id}', '${user.username.replace(/'/g, "\\'")}', '${user.email.replace(/'/g, "\\'")}', '${user.avatar}')">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-red-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            ${user.avatar}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-gray-800 dark:text-white text-sm truncate">${user.username}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${user.email}</p>
+                        </div>
+                        ${user.code ? `<span class="text-xs bg-gray-100 dark:bg-slate-600 px-2 py-1 rounded text-gray-600 dark:text-gray-300 flex-shrink-0">${user.code}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            searchResults.classList.remove('hidden');
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.add('hidden');
+        }
+    });
+});
+
+function selectUser(id, username, email, avatar) {
+    const userSelect = document.getElementById('user_id');
+    const searchInput = document.getElementById('userSearch');
+    const searchResults = document.getElementById('searchResults');
+    const selectedUserDisplay = document.getElementById('selectedUserDisplay');
+    const selectedUserName = document.getElementById('selectedUserName');
+    const selectedUserEmail = document.getElementById('selectedUserEmail');
+    const selectedUserAvatar = document.getElementById('selectedUserAvatar');
+    
+    // Set the hidden select value
+    userSelect.value = id;
+    
+    // Update the display
+    selectedUserName.textContent = username;
+    selectedUserEmail.textContent = email;
+    selectedUserAvatar.textContent = avatar;
+    
+    // Show selected user display
+    selectedUserDisplay.classList.remove('hidden');
+    
+    // Hide search results and input
+    searchResults.classList.add('hidden');
+    searchInput.value = '';
+    
+    // Refresh icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function clearUserSelection() {
+    const userSelect = document.getElementById('user_id');
+    const selectedUserDisplay = document.getElementById('selectedUserDisplay');
+    const searchInput = document.getElementById('userSearch');
+    
+    // Clear the hidden select value
+    userSelect.value = '';
+    
+    // Hide selected user display
+    selectedUserDisplay.classList.add('hidden');
+    
+    // Focus on search input
+    searchInput.focus();
+}
+</script>
+{% endblock %}

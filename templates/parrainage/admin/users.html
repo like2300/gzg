@@ -1,0 +1,172 @@
+{% extends 'parrainage/admin/admin_base.html' %}
+
+{% block title %}Utilisateurs - Administration{% endblock %}
+
+{% block content %}
+<!-- Users Management Page -->
+<section class="animate-slide-up">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Gestion des Utilisateurs</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">{{ total_users }} utilisateurs ({{ vip_count }} VIP)</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'admin_dashboard' %}" class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Retour</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 mb-6">
+        <div class="flex flex-wrap gap-4 items-center">
+            <div class="relative flex-1 min-w-[200px]">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-400"></i>
+                <input type="text" name="search" placeholder="Rechercher (nom, email, code...)" value="{{ search }}" 
+                    class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white">
+            </div>
+            <select name="status" class="px-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                <option value="">Tous les statuts</option>
+                <option value="vip" {% if status == 'vip' %}selected{% endif %}>VIP</option>
+                <option value="non_vip" {% if status == 'non_vip' %}selected{% endif %}>Non VIP</option>
+            </select>
+            <button type="submit" class="px-6 py-2 bg-primary hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i>
+                Filtrer
+            </button>
+            <a href="{% url 'admin_users' %}" class="px-6 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                Reset
+            </a>
+        </div>
+    </form>
+
+    <!-- Table Container -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-4">Utilisateur</th>
+                        <th class="px-6 py-4">Code</th>
+                        <th class="px-6 py-4">Parrain</th>
+                        <th class="px-6 py-4">Filleuls</th>
+                        <th class="px-6 py-4">Payé</th>
+                        <th class="px-6 py-4">Progression</th>
+                        <th class="px-6 py-4">Statut</th>
+                        <th class="px-6 py-4">Date</th>
+                        <th class="px-6 py-4 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-slate-700 text-sm">
+                    {% for profile in profiles %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 dark:bg-red-900/30 flex items-center justify-center text-xs font-bold text-primary dark:text-red-300 flex-shrink-0">
+                                    {{ profile.user.username|slice:":2"|upper }}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">{{ profile.user.username }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ profile.user.email|truncatechars:25 }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <code class="text-xs bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">{{ profile.referral_code }}</code>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
+                            {% if profile.referrer %}
+                                <a href="{% url 'admin_user_detail' profile.referrer.pk %}" class="text-primary dark:text-red-400 hover:underline text-sm">
+                                    {{ profile.referrer.user.username }}
+                                </a>
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-semibold text-gray-700 dark:text-gray-200">{{ profile.referrals.count }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-green-600 dark:text-green-400">{{ profile.total_paid|floatformat:0 }} FCFA</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-24 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full" style="width: {{ profile.progress_percent }}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ profile.progress_percent|floatformat:0 }}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if profile.is_vip %}
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800">
+                                    <i data-lucide="crown" class="w-3 h-3 inline mr-1"></i>VIP
+                                </span>
+                            {% else %}
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-slate-600 dark:text-gray-300 border border-gray-200 dark:border-slate-500">
+                                    En cours
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
+                            {{ profile.user.date_joined|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex justify-center gap-2">
+                                <a href="{% url 'admin_user_detail' profile.pk %}" 
+                                    class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                    title="Voir détails">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'admin_network_tree' profile.pk %}" 
+                                    class="p-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                                    title="Voir réseau">
+                                    <i data-lucide="network" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                                    <i data-lucide="users" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                                <p class="text-gray-500 dark:text-gray-400">Aucun utilisateur trouvé</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if profiles.has_other_pages %}
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Page {{ profiles.number }} sur {{ profiles.paginator.num_pages }}
+            </p>
+            <div class="flex gap-2">
+                {% if profiles.has_previous %}
+                <a href="?page={{ profiles.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
+                    class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors text-sm font-medium">
+                    Précédent
+                </a>
+                {% endif %}
+
+                {% if profiles.has_next %}
+                <a href="?page={{ profiles.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
+                    class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-red-700 transition-colors text-sm font-medium">
+                    Suivant
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

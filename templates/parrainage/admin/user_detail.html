@@ -1,0 +1,439 @@
+{% extends 'parrainage/admin/admin_base.html' %}
+
+{% block title %}{{ profile.user.username }} - Administration{% endblock %}
+
+{% block content %}
+<!-- User Detail Page -->
+<section class="animate-slide-up">
+    <!-- User Header Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 mb-6">
+        <div class="flex flex-col md:flex-row items-center gap-6">
+            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-red-800 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-red-900/20 flex-shrink-0">
+                {{ profile.user.username|slice:":2"|upper }}
+            </div>
+            <div class="flex-1 text-center md:text-left">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-1">{{ profile.user.username }}</h1>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">{{ profile.user.email }}</p>
+                <div class="flex flex-wrap justify-center md:justify-start gap-2">
+                    <code class="px-3 py-1 bg-gray-100 dark:bg-slate-700 rounded-lg text-sm text-gray-700 dark:text-gray-300">{{ profile.referral_code }}</code>
+                    {% if profile.is_vip %}
+                    <span class="px-3 py-1 rounded-lg text-sm font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800">
+                        <i data-lucide="crown" class="w-3 h-3 inline mr-1"></i>VIP
+                    </span>
+                    {% else %}
+                    <span class="px-3 py-1 rounded-lg text-sm font-semibold bg-gray-100 text-gray-600 dark:bg-slate-600 dark:text-gray-300 border border-gray-200 dark:border-slate-500">
+                        En cours
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openResetFormModal()" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-orange-900/20">
+                    <i data-lucide="key" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Réinitialiser MDP</span>
+                </button>
+                <a href="{% url 'admin_network_tree' profile.pk %}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-green-900/20">
+                    <i data-lucide="network" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Voir réseau</span>
+                </a>
+                <a href="{% url 'admin_users' %}" class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="banknote" class="w-4 h-4 text-green-600 dark:text-green-400"></i>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Total payé</span>
+            </div>
+            <p class="text-lg font-bold text-gray-800 dark:text-white">{{ profile.total_paid|floatformat:0 }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">FCFA</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="percent" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Progression</span>
+            </div>
+            <p class="text-lg font-bold text-gray-800 dark:text-white">{{ profile.progress_percent|floatformat:1 }}%</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ profile.remaining_amount|floatformat:0 }} FCFA restants</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="users" class="w-4 h-4 text-purple-600 dark:text-purple-400"></i>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Filleuls</span>
+            </div>
+            <p class="text-lg font-bold text-gray-800 dark:text-white">{{ profile.referrals.count }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">/{{ profile.REFERRAL_LIMIT }} max</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="git-branch" class="w-4 h-4 text-orange-600 dark:text-orange-400"></i>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Réseau</span>
+            </div>
+            <p class="text-lg font-bold text-gray-800 dark:text-white">{{ total_downline }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Descendants</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="credit-card" class="w-4 h-4 text-yellow-600 dark:text-yellow-400"></i>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Paiements</span>
+            </div>
+            <p class="text-lg font-bold text-gray-800 dark:text-white">{{ payments.count }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ total_payments_sum|floatformat:0 }} FCFA</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="calendar" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Inscription</span>
+            </div>
+            <p class="text-lg font-bold text-gray-800 dark:text-white">{{ profile.user.date_joined|date:"d/m/y" }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {% if profile.referrer %}
+                    {{ profile.referrer.user.username }}
+                {% else %}
+                    Aucun parrain
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 mb-6">
+        <h3 class="font-bold text-lg text-gray-800 dark:text-white mb-4">Progression vers le statut VIP</h3>
+        <div class="mb-3">
+            <div class="h-6 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-primary to-red-600 rounded-full flex items-center justify-end px-3 transition-all duration-500" 
+                     style="width: {{ profile.progress_percent }}%">
+                    <span class="text-xs font-bold text-white whitespace-nowrap">{{ profile.progress_percent|floatformat:1 }}%</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-between text-sm">
+            <span class="text-gray-600 dark:text-gray-400">{{ profile.total_paid|floatformat:0 }} FCFA payés</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ profile.remaining_amount|floatformat:0 }} FCFA restants</span>
+        </div>
+    </div>
+
+    <!-- Payments History -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg text-gray-800 dark:text-white">Historique des paiements</h3>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary dark:bg-red-900/30 dark:text-red-300">
+                {{ payments.count }} paiement(s)
+            </span>
+        </div>
+        {% if payments %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-4 py-3">Référence</th>
+                        <th class="px-4 py-3">Montant</th>
+                        <th class="px-4 py-3">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-gray-100 dark:divide-slate-700">
+                    {% for payment in payments %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-4 py-3">
+                            <code class="text-xs bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded text-blue-700 dark:text-blue-300 font-mono">{{ payment.reference }}</code>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="font-bold text-green-600 dark:text-green-400">{{ payment.amount|floatformat:0 }} FCFA</span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                            {{ payment.date_created|date:"d/m/Y H:i" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-8 text-center">
+            <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                <i data-lucide="banknote" class="w-8 h-8 text-gray-400"></i>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400">Aucun paiement enregistré</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Direct Referrals -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg text-gray-800 dark:text-white">Filleuls directs</h3>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary dark:bg-red-900/30 dark:text-red-300">
+                {{ direct_referrals.count }}
+            </span>
+        </div>
+        {% if direct_referrals %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-4 py-3">Utilisateur</th>
+                        <th class="px-4 py-3">Code</th>
+                        <th class="px-4 py-3">Payé</th>
+                        <th class="px-4 py-3">Progression</th>
+                        <th class="px-4 py-3">Statut</th>
+                        <th class="px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-gray-100 dark:divide-slate-700">
+                    {% for referral in direct_referrals %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-primary/10 dark:bg-red-900/30 flex items-center justify-center text-xs font-bold text-primary dark:text-red-300">
+                                    {{ referral.user.username|slice:":2"|upper }}
+                                </div>
+                                <span class="font-medium text-gray-800 dark:text-white">{{ referral.user.username }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <code class="text-xs bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">{{ referral.referral_code }}</code>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="font-bold text-green-600 dark:text-green-400">{{ referral.total_paid|floatformat:0 }} FCFA</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full" style="width: {{ referral.progress_percent }}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ referral.progress_percent|floatformat:0 }}%</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if referral.is_vip %}
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">VIP</span>
+                            {% else %}
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-slate-600 dark:text-gray-300">En cours</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex justify-center">
+                                <a href="{% url 'admin_user_detail' referral.pk %}" 
+                                    class="px-3 py-1 rounded-lg bg-primary/10 text-primary dark:bg-red-900/30 dark:text-red-300 hover:bg-primary/20 dark:hover:bg-red-900/40 transition-colors text-xs font-medium">
+                                    Voir
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-8 text-center">
+            <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                <i data-lucide="users" class="w-8 h-8 text-gray-400"></i>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400">Aucun filleul direct</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Modal de réinitialisation de mot de passe (Formulaire) -->
+<div id="resetFormModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="closeResetFormModal(event)">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-up">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800 dark:text-white">
+                <i data-lucide="key" class="w-5 h-5 inline mr-2 text-orange-600"></i>
+                Réinitialiser le mot de passe
+            </h3>
+            <button onclick="closeResetFormModalDirect()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="generate_reset_link" value="1">
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Durée de validité du lien (heures)
+                </label>
+                <select name="duration" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="1">1 heure</option>
+                    <option value="6">6 heures</option>
+                    <option value="12">12 heures</option>
+                    <option value="24" selected>24 heures</option>
+                    <option value="48">48 heures</option>
+                    <option value="72">72 heures</option>
+                </select>
+            </div>
+
+            <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-4">
+                <p class="text-sm text-orange-800 dark:text-orange-200">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                    Un lien unique sera généré et affiché. Vous pourrez l'envoyer à l'utilisateur.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeResetFormModalDirect()" class="flex-1 px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                    Annuler
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors font-medium">
+                    <i data-lucide="link" class="w-4 h-4 inline mr-1"></i>
+                    Générer le lien
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal pour le lien de réinitialisation (Affichage) -->
+<div id="resetLinkModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeResetLinkModal(event)">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slide-up">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary to-red-700 p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <i data-lucide="key" class="w-5 h-5 text-white"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Lien de réinitialisation</h3>
+            </div>
+            <button onclick="closeResetLinkModalDirect()" class="text-white/80 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-4">
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+                <i data-lucide="info" class="w-4 h-4 inline mr-1 text-blue-500"></i>
+                Ce lien est valable pour <strong class="text-primary dark:text-red-400">{{ reset_duration|default:"24" }} heures</strong>
+            </p>
+
+            <!-- Lien avec bouton copie -->
+            <div class="relative">
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 overflow-hidden">
+                        <code id="resetLink" class="text-xs text-gray-700 dark:text-gray-300 break-all font-mono">{{ reset_link }}</code>
+                    </div>
+                    <button onclick="copyResetLink()"
+                        class="p-3 bg-primary hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center flex-shrink-0"
+                        title="Copier le lien">
+                        <i data-lucide="copy" class="w-5 h-5" id="copyIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message de succès copie -->
+            <div id="copySuccess" class="hidden flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <i data-lucide="check-circle" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                <span class="text-sm font-medium text-green-800 dark:text-green-200">Lien copié avec succès !</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-4">
+                <a id="openLinkBtn" href="#" target="_blank"
+                    class="flex-1 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm flex items-center justify-center gap-2">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    Ouvrir dans un nouvel onglet
+                </a>
+                <button onclick="closeResetLinkModalDirect()"
+                    class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialiser les icônes Lucide au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+
+    // Vérifier si le lien de réinitialisation est présent via les variables Django
+    const resetLinkEl = document.getElementById('resetLink');
+    {% if reset_link and request.method == 'POST' %}
+    const resetLinkFromContext = "{{ reset_link|escapejs }}";
+    if (resetLinkEl) {
+        resetLinkEl.textContent = resetLinkFromContext;
+    }
+    const openLinkBtn = document.getElementById('openLinkBtn');
+    if (openLinkBtn) {
+        openLinkBtn.href = resetLinkFromContext;
+    }
+    // Ouvrir automatiquement le modal du lien après soumission du formulaire
+    setTimeout(() => {
+        openResetLinkModal();
+    }, 500);
+    {% endif %}
+});
+
+// === Modal Formulaire ===
+function openResetFormModal() {
+    document.getElementById('resetFormModal').classList.remove('hidden');
+    setTimeout(() => lucide.createIcons(), 50);
+}
+
+function closeResetFormModal(event) {
+    if (event.target === event.currentTarget) {
+        document.getElementById('resetFormModal').classList.add('hidden');
+    }
+}
+
+function closeResetFormModalDirect() {
+    document.getElementById('resetFormModal').classList.add('hidden');
+}
+
+// === Modal Lien ===
+function openResetLinkModal() {
+    document.getElementById('resetLinkModal').classList.remove('hidden');
+    setTimeout(() => lucide.createIcons(), 50);
+}
+
+function closeResetLinkModal(event) {
+    if (event.target === event.currentTarget) {
+        document.getElementById('resetLinkModal').classList.add('hidden');
+    }
+}
+
+function closeResetLinkModalDirect() {
+    document.getElementById('resetLinkModal').classList.add('hidden');
+}
+
+// === Copier le lien ===
+function copyResetLink() {
+    const linkText = document.getElementById('resetLink').textContent.trim();
+
+    navigator.clipboard.writeText(linkText).then(() => {
+        // Afficher le message de succès
+        const successMsg = document.getElementById('copySuccess');
+        successMsg.classList.remove('hidden');
+
+        // Changer l'icône du bouton
+        const copyIcon = document.getElementById('copyIcon');
+        copyIcon.setAttribute('data-lucide', 'check');
+        lucide.createIcons();
+
+        // Cacher le message après 3 secondes
+        setTimeout(() => {
+            successMsg.classList.add('hidden');
+            copyIcon.setAttribute('data-lucide', 'copy');
+            lucide.createIcons();
+        }, 3000);
+    }).catch(err => {
+        console.error('Erreur copie:', err);
+        alert('Erreur lors de la copie. Sélectionnez et copiez le lien manuellement.');
+    });
+}
+</script>
+{% endblock %}

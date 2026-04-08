@@ -1,0 +1,333 @@
+{% extends 'parrainage/admin/admin_base.html' %}
+
+{% block title %}Dashboard - Administration{% endblock %}
+
+{% block content %}
+<!-- Dashboard Overview Page -->
+<section class="animate-fade-in space-y-8 pb-20">
+    
+    <!-- Hero Section -->
+    <div class="relative w-full rounded-3xl overflow-hidden bg-primary shadow-2xl shadow-red-900/30">
+        <!-- Decorative Blobs -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-red-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        
+        <div class="relative z-10 px-8 py-10 sm:px-12 sm:py-12 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="text-left space-y-4 max-w-2xl">
+                <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-xs font-medium text-red-100">
+                    Panneau d'administration
+                </span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white leading-tight">
+                    Système de Gestion <br>
+                    <span class="text-red-200">GZG</span>
+                </h2>
+                <p class="text-red-100/80 text-sm md:text-base max-w-lg">
+                    Gérez les utilisateurs, les paiements et suivez la progression vers le statut VIP de manière transparente et efficace.
+                </p>
+            </div>
+            <div class="hidden md:block">
+                <i data-lucide="shield-check" class="w-48 h-48 text-white/10 rotate-12"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Card 1: Total Users -->
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-300">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-md">Total</span>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800 dark:text-white">{{ total_users }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Utilisateurs inscrits</p>
+        </div>
+
+        <!-- Card 2: VIP Members -->
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl text-yellow-600 dark:text-yellow-300">
+                    <i data-lucide="crown" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-md">{{ vip_percentage|floatformat:1 }}%</span>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800 dark:text-white">{{ total_vip }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Membres VIP</p>
+        </div>
+
+        <!-- Card 3: Total Payments -->
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl text-green-600 dark:text-green-300">
+                    <i data-lucide="banknote" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800 dark:text-white">{{ total_payments|floatformat:0 }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">FCFA collectés</p>
+        </div>
+
+        <!-- Card 4: Quota -->
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md transition-shadow group">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600 dark:text-purple-300">
+                    <i data-lucide="target" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-bold text-gray-800 dark:text-white">{{ quota|floatformat:0 }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Quota VIP (FCFA)</p>
+        </div>
+    </div>
+
+    <!-- Progress Distribution Section with Circular Progress -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-lg text-gray-800 dark:text-white">Répartition par progression</h3>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <!-- 0 FCFA - Red Circle -->
+            <div class="text-center">
+                <div class="relative w-32 h-32 mx-auto mb-3">
+                    <svg class="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" class="text-gray-100 dark:text-slate-700"/>
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" 
+                                stroke-dasharray="351.86" 
+                                stroke-dashoffset="{% widthratio progress_0_25 total_users 351.86 %}"
+                                class="text-red-500 transition-all duration-500"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-2xl font-bold text-gray-800 dark:text-white">{{ progress_0_25 }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{% widthratio progress_0_25 total_users 100 %}%</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span class="text-xs text-gray-600 dark:text-gray-300">0 FCFA</span>
+                </div>
+            </div>
+
+            <!-- 1 - Quota/2 - Yellow Circle -->
+            <div class="text-center">
+                <div class="relative w-32 h-32 mx-auto mb-3">
+                    <svg class="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" class="text-gray-100 dark:text-slate-700"/>
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" 
+                                stroke-dasharray="351.86" 
+                                stroke-dashoffset="{% widthratio progress_25_50 total_users 351.86 %}"
+                                class="text-yellow-500 transition-all duration-500"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-2xl font-bold text-gray-800 dark:text-white">{{ progress_25_50 }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{% widthratio progress_25_50 total_users 100 %}%</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                    <span class="text-xs text-gray-600 dark:text-gray-300">1 - {{ quota_half|floatformat:0 }}</span>
+                </div>
+            </div>
+
+            <!-- Quota/2 - Quota*0.75 - Blue Circle -->
+            <div class="text-center">
+                <div class="relative w-32 h-32 mx-auto mb-3">
+                    <svg class="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" class="text-gray-100 dark:text-slate-700"/>
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" 
+                                stroke-dasharray="351.86" 
+                                stroke-dashoffset="{% widthratio progress_50_75 total_users 351.86 %}"
+                                class="text-blue-500 transition-all duration-500"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-2xl font-bold text-gray-800 dark:text-white">{{ progress_50_75 }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{% widthratio progress_50_75 total_users 100 %}%</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <span class="text-xs text-gray-600 dark:text-gray-300">{{ quota_half|floatformat:0 }} - {{ quota_75|floatformat:0 }}</span>
+                </div>
+            </div>
+
+            <!-- Quota*0.75 - Quota - Green Circle -->
+            <div class="text-center">
+                <div class="relative w-32 h-32 mx-auto mb-3">
+                    <svg class="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" class="text-gray-100 dark:text-slate-700"/>
+                        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="16" fill="none" 
+                                stroke-dasharray="351.86" 
+                                stroke-dashoffset="{% widthratio progress_75_100 total_users 351.86 %}"
+                                class="text-green-500 transition-all duration-500"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-2xl font-bold text-gray-800 dark:text-white">{{ progress_75_100 }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{% widthratio progress_75_100 total_users 100 %}%</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span class="text-xs text-gray-600 dark:text-gray-300">{{ quota_75|floatformat:0 }} - {{ quota|floatformat:0 }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-100 dark:border-slate-700">
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-500 dark:text-gray-400">Total utilisateurs</span>
+                <span class="font-bold text-gray-800 dark:text-white">{{ total_users }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two Columns: Recent Payments & Top Contributors -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Payments -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white">Derniers paiements</h3>
+                <a href="{% url 'admin_payments' %}" class="text-sm text-primary dark:text-red-300 hover:underline">Voir tout</a>
+            </div>
+            {% if recent_payments %}
+            <div class="space-y-4">
+                {% for payment in recent_payments %}
+                <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-700/50 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-primary/10 dark:bg-red-900/30 flex items-center justify-center text-xs font-bold text-primary dark:text-red-300">
+                            {{ payment.profile.user.username|slice:":2"|upper }}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800 dark:text-white text-sm">{{ payment.profile.user.username }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ payment.reference|truncatechars:20 }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-green-600 dark:text-green-400">{{ payment.amount|floatformat:0 }} FCFA</p>
+                        <p class="text-xs text-gray-400">{{ payment.date_created|date:"d/m/y" }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+                <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                    <i data-lucide="banknote" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400">Aucun paiement enregistré</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Top Contributors -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white">Top contributeurs</h3>
+                <a href="{% url 'admin_users' %}" class="text-sm text-primary dark:text-red-300 hover:underline">Voir tout</a>
+            </div>
+            {% if top_contributors %}
+            <div class="space-y-4">
+                {% for profile in top_contributors|slice:":5" %}
+                <div class="flex items-center gap-4 p-3 rounded-xl bg-gray-50 dark:bg-slate-700/50 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold {% if forloop.counter == 1 %}bg-yellow-100 text-yellow-700{% elif forloop.counter == 2 %}bg-gray-200 text-gray-700{% elif forloop.counter == 3 %}bg-orange-100 text-orange-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ forloop.counter }}
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-primary/10 dark:bg-red-900/30 flex items-center justify-center text-xs font-bold text-primary dark:text-red-300">
+                        {{ profile.user.username|slice:":2"|upper }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800 dark:text-white text-sm">{{ profile.user.username }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ profile.referral_code }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-green-600 dark:text-green-400">{{ profile.total_paid|floatformat:0 }} FCFA</p>
+                        <p class="text-xs text-gray-400">{{ profile.progress_percent|floatformat:0 }}%</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+                <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                    <i data-lucide="trophy" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400">Aucun contributeur</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Users Table -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-lg text-gray-800 dark:text-white">Derniers inscrits</h3>
+            <a href="{% url 'admin_users' %}" class="text-sm text-primary dark:text-red-300 hover:underline">Voir tout</a>
+        </div>
+        {% if recent_users %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-xs text-gray-400 uppercase border-b border-gray-100 dark:border-slate-700">
+                        <th class="py-3 font-semibold">Utilisateur</th>
+                        <th class="py-3 font-semibold">Code</th>
+                        <th class="py-3 font-semibold">Parrain</th>
+                        <th class="py-3 font-semibold">Payé</th>
+                        <th class="py-3 font-semibold">Progression</th>
+                        <th class="py-3 font-semibold">Statut</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    {% for profile in recent_users|slice:":10" %}
+                    <tr class="group hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <td class="py-4 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 dark:bg-red-900/30 flex items-center justify-center text-xs font-bold text-primary dark:text-red-300">
+                                {{ profile.user.username|slice:":2"|upper }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800 dark:text-white">{{ profile.user.username }}</p>
+                                <p class="text-xs text-gray-500">{{ profile.user.email|truncatechars:20 }}</p>
+                            </div>
+                        </td>
+                        <td class="py-4 text-gray-600 dark:text-gray-300 font-mono text-xs">{{ profile.referral_code }}</td>
+                        <td class="py-4 text-gray-600 dark:text-gray-300">
+                            {% if profile.referrer %}
+                                {{ profile.referrer.user.username }}
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 font-semibold text-gray-700 dark:text-gray-200">{{ profile.total_paid|floatformat:0 }} FCFA</td>
+                        <td class="py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-24 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full" style="width: {{ profile.progress_percent }}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ profile.progress_percent|floatformat:0 }}%</span>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            {% if profile.is_vip %}
+                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">VIP</span>
+                            {% else %}
+                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-slate-600 dark:text-gray-300">En cours</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                <i data-lucide="users" class="w-8 h-8 text-gray-400"></i>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400">Aucun utilisateur</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

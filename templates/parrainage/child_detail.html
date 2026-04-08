@@ -1,0 +1,175 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}{{ current_profile.user.username }} - GZG{% endblock %}
+
+{% block content %}
+<div class="slide-up">
+    <!-- En-tête -->
+    <div class="mb-4">
+        <a href="{% url 'my_referrals' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-arrow-left"></i>
+            <span>Retour</span>
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <div class="list-item-avatar" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); width: 60px; height: 60px; font-size: 1.5rem;">
+                {{ current_profile.user.username|slice:":2"|upper }}
+            </div>
+            <div>
+                <h2 class="fw-bold mb-0" style="font-size: 1.25rem;">{{ current_profile.user.username }}</h2>
+                <small class="text-secondary">
+                    <i class="bi bi-person-badge"></i> {{ current_profile.referral_code }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="stat-card">
+                <div class="stat-card-icon" style="color: var(--primary-color);">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-card-value" style="color: var(--primary-color);">{{ total_referrals }}</div>
+                <div class="stat-card-label">Filleuls directs</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stat-card">
+                <div class="stat-card-icon" style="color: #6366f1;">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <div class="stat-card-value" style="color: #6366f1;">{{ total_downline }}</div>
+                <div class="stat-card-label">Réseau total</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stat-card">
+                <div class="stat-card-icon" style="color: #f59e0b;">
+                    <i class="bi bi-star"></i>
+                </div>
+                <div class="stat-card-value" style="color: #f59e0b;">{{ vip_referrals }}</div>
+                <div class="stat-card-label">Filleuls VIP</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stat-card stat-card-success">
+                <div class="stat-card-icon">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="stat-card-value">{{ current_profile.total_paid|floatformat:0 }}</div>
+                <div class="stat-card-label">Payé (FCFA)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progression VIP -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-header">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-target" style="color: var(--primary-color);"></i>
+                Progression VIP
+            </h6>
+            {% if current_profile.is_vip %}
+            <span class="badge-vip" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">
+                <i class="bi bi-check-circle-fill"></i> VIP
+            </span>
+            {% else %}
+            <span class="badge-pending" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">
+                {{ current_profile.progress_percent|floatformat:0 }}%
+            </span>
+            {% endif %}
+        </div>
+        <div class="card-mobile-body">
+            <div class="progress-modern mb-3">
+                <div class="progress-modern-bar" 
+                     style="width: {{ current_profile.progress_percent }}%; 
+                            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));">
+                </div>
+            </div>
+            <div class="row g-2 text-center">
+                <div class="col-6">
+                    <small class="text-secondary">Objectif</small>
+                    <div class="fw-bold">{{ quota|floatformat:0 }} FCFA</div>
+                </div>
+                <div class="col-6">
+                    <small class="text-secondary">Reste</small>
+                    <div class="fw-bold" style="color: var(--success-color);">{{ current_profile.remaining_amount|floatformat:0 }} FCFA</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filleuls directs -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-header">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-people" style="color: var(--primary-color);"></i>
+                Filleuls Directs
+            </h6>
+            <span class="badge bg-secondary">{{ referrals.count }}</span>
+        </div>
+        <div class="card-mobile-body" style="padding: 0;">
+            {% if referrals %}
+            {% for referral in referrals %}
+            <div class="list-item" style="border-radius: 0; {% if not forloop.last %}border-bottom: 1px solid var(--border-color);{% endif %}">
+                <div class="list-item-avatar" style="background: linear-gradient(135deg, #667eea, #764ba2); width: 40px; height: 40px; font-size: 0.9rem;">
+                    {{ referral.user.username|slice:":2"|upper }}
+                </div>
+                <div class="list-item-content">
+                    <div class="list-item-title" style="font-size: 0.95rem;">{{ referral.user.username }}</div>
+                    <div class="list-item-subtitle">{{ referral.total_paid|floatformat:0 }} FCFA</div>
+                </div>
+                {% if referral.is_vip %}
+                <span class="badge-vip" style="padding: 0.25rem 0.5rem; font-size: 0.7rem;">
+                    <i class="bi bi-star-fill"></i>
+                </span>
+                {% else %}
+                <small class="text-secondary">{{ referral.progress_percent|floatformat:0 }}%</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-people" style="font-size: 3rem; color: var(--border-color);"></i>
+                <p class="text-secondary mt-2 mb-0">Aucun filleul direct</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Descendants -->
+    <div class="card-mobile mb-4">
+        <div class="card-mobile-header">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-diagram-3" style="color: var(--primary-color);"></i>
+                Descendants
+            </h6>
+        </div>
+        <div class="card-mobile-body">
+            {% if downline_tree %}
+            <p class="text-secondary mb-3">
+                <strong>{{ total_downline }}</strong> personnes dans le réseau de {{ current_profile.user.username }}
+            </p>
+            <a href="{% url 'view_parrain_tree' current_profile.pk %}" class="btn btn-outline-primary w-100">
+                <i class="bi bi-diagram-3"></i>
+                Voir l'arbre complet
+            </a>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: var(--border-color);"></i>
+                <p class="text-secondary mt-2 mb-0">Aucun descendant</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-grid gap-2">
+        <a href="{% url 'view_parrain_tree' current_profile.pk %}" class="btn btn-primary">
+            <i class="bi bi-diagram-3"></i>
+            Voir l'arbre de parrainage
+        </a>
+    </div>
+</div>
+{% endblock %}

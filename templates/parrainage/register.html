@@ -1,0 +1,489 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}Inscription - GZG{% endblock %}
+
+{% block extra_css %}
+<style>
+    .register-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Animated Background Shapes */
+    .register-page::before {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        top: -100px;
+        right: -100px;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .register-page::after {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        bottom: -50px;
+        left: -50px;
+        animation: float 8s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+
+    .register-card {
+        animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .register-logo {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .register-logo-icon {
+        width: 90px;
+        height: 90px;
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: white;
+        margin: 0 auto 1.25rem;
+        box-shadow: 0 10px 30px rgba(220, 38, 38, 0.3);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(220, 38, 38, 0.3); }
+        50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(220, 38, 38, 0.4); }
+    }
+
+    .register-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #dc2626, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .register-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .input-group-modern {
+        position: relative;
+        margin-bottom: 1.25rem;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+    }
+
+    .input-field {
+        width: 100%;
+        padding: 1rem 1rem 1rem 4.5rem;
+        border: none;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s;
+        background: transparent;
+        outline: none;
+    }
+
+    .input-label {
+        position: absolute;
+        left: 4.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.95rem;
+        pointer-events: none;
+        transition: all 0.3s;
+    }
+
+    .input-field:focus ~ .input-label,
+    .input-field:not(:placeholder-shown) ~ .input-label {
+        top: -0.5rem;
+        left: 1rem;
+        font-size: 0.75rem;
+        color: #dc2626;
+        background: white;
+        padding: 0 0.5rem;
+    }
+
+    .btn-register {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        border: none;
+        border-radius: 16px;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 10px 30px rgba(220, 38, 38, 0.3);
+        margin-top: 0.5rem;
+    }
+
+    .btn-register:active {
+        transform: scale(0.97);
+        box-shadow: 0 5px 20px rgba(220, 38, 38, 0.3);
+    }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e2e8f0;
+    }
+
+    .divider span {
+        padding: 0 1rem;
+    }
+
+    .login-link {
+        text-align: center;
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .login-link a {
+        color: #dc2626;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .feature-item {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        transition: all 0.3s;
+    }
+
+    .feature-item:hover {
+        background: rgba(255, 255, 255, 0.8);
+        transform: translateY(-5px);
+    }
+
+    .feature-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .feature-text {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .alert-modern {
+        padding: 1rem;
+        border-radius: 16px;
+        margin-bottom: 1.25rem;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #059669;
+    }
+
+    .alert-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        color: #d97706;
+    }
+
+    .alert-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 480px) {
+        .register-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .register-logo-icon {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+        }
+
+        .register-title {
+            font-size: 1.5rem;
+        }
+
+        .features-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .feature-item {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .feature-icon {
+            font-size: 1.25rem;
+        }
+
+        .feature-text {
+            font-size: 0.7rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-page">
+    <div class="register-card">
+        <!-- Logo & Title -->
+        <div class="register-logo">
+            <div class="register-logo-icon">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <h1 class="register-title">GZG</h1>
+            <p class="register-subtitle">Créez votre compte gratuitement</p>
+        </div>
+
+        <!-- Referral Alert -->
+        {% if referrer_profile and not referral_limit_reached %}
+        <div class="alert-modern alert-success">
+            <i class="bi bi-check-circle-fill alert-icon"></i>
+            <span>Vous avez été parrainé par <strong>{{ referrer_profile.user.username }}</strong></span>
+        </div>
+        {% elif referral_limit_reached %}
+        <div class="alert-modern alert-warning">
+            <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
+            <span><strong>Parrainage indisponible</strong> - Le parrain a atteint le nombre maximum de filleuls.</span>
+        </div>
+        {% endif %}
+
+        <!-- Register Form -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if referrer_code %}
+            <input type="hidden" name="referrer_code" value="{{ referrer_code }}">
+            {% endif %}
+
+            <!-- Username Input -->
+            <div class="input-group-modern">
+                <input
+                    type="text"
+                    class="input-field"
+                    id="username"
+                    name="username"
+                    placeholder=" "
+                    required
+                    autofocus
+                >
+                <div class="input-icon">
+                    <i class="bi bi-person"></i>
+                </div>
+                <label for="username" class="input-label">Nom d'utilisateur</label>
+            </div>
+
+            <!-- Email Input -->
+            <div class="input-group-modern">
+                <input
+                    type="email"
+                    class="input-field"
+                    id="email"
+                    name="email"
+                    placeholder=" "
+                    required
+                >
+                <div class="input-icon">
+                    <i class="bi bi-envelope"></i>
+                </div>
+                <label for="email" class="input-label">Email</label>
+            </div>
+
+            <!-- Password Input -->
+            <div class="input-group-modern">
+                <input
+                    type="password"
+                    class="input-field"
+                    id="password"
+                    name="password"
+                    placeholder=" "
+                    required
+                    minlength="8"
+                >
+                <div class="input-icon">
+                    <i class="bi bi-lock"></i>
+                </div>
+                <label for="password" class="input-label">Mot de passe</label>
+            </div>
+
+            <!-- Confirm Password Input -->
+            <div class="input-group-modern">
+                <input
+                    type="password"
+                    class="input-field"
+                    id="confirm_password"
+                    name="confirm_password"
+                    placeholder=" "
+                    required
+                >
+                <div class="input-icon">
+                    <i class="bi bi-lock-fill"></i>
+                </div>
+                <label for="confirm_password" class="input-label">Confirmer le mot de passe</label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-register">
+                <i class="bi bi-check-lg"></i>
+                Créer mon compte
+            </button>
+
+            <!-- Login Link -->
+            <div class="divider">
+                <span>ou</span>
+            </div>
+
+            <div class="login-link">
+                Déjà un compte ?
+                <br>
+                <a href="{% url 'login' %}">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Se connecter
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animation d'entrée
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.input-field');
+
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+
+    // Effet de ripple sur le bouton
+    const btn = document.querySelector('.btn-register');
+    btn.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+
+        this.appendChild(ripple);
+
+        setTimeout(() => ripple.remove(), 600);
+    });
+});
+</script>
+
+<style>
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(0);
+    animation: ripple-animation 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+</style>
+{% endblock %}

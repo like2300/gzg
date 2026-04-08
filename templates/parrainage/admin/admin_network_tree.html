@@ -1,0 +1,271 @@
+{% extends 'parrainage/admin/admin_base.html' %}
+
+{% block title %}Arbre de {{ root_profile.user.username }} - Administration{% endblock %}
+
+{% block content %}
+<!-- Admin Network Tree Page -->
+<section class="animate-slide-up">
+    <!-- Header avec selecteur d'utilisateur -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 mb-6">
+        <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4 flex-1">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-red-800 flex items-center justify-center text-white text-2xl font-bold shadow-lg flex-shrink-0">
+                    {{ root_profile.user.username|slice:":2"|upper }}
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ root_profile.user.username }}</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <code class="text-xs bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">{{ root_profile.referral_code }}</code>
+                        {% if root_profile.is_vip %}
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                            <i data-lucide="crown" class="w-3 h-3 inline"></i> VIP
+                        </span>
+                        {% else %}
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-slate-600 dark:text-gray-300">
+                            {{ root_profile.progress_percent|floatformat:0 }}% VIP
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Selecteur d'utilisateur -->
+            <div class="w-full lg:w-auto">
+                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                    <i data-lucide="users" class="w-3 h-3 inline mr-1"></i>
+                    Changer d'utilisateur
+                </label>
+                <select onchange="window.location.href=this.value" 
+                    class="w-full lg:w-64 px-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-sm">
+                    <option value="{% url 'admin_all_networks' %}">-- Tous les réseaux --</option>
+                    {% for user in all_users %}
+                    <option value="{% url 'admin_network_tree' user.pk %}" {% if user.pk == root_profile.pk %}selected{% endif %}>
+                        {{ user.user.username }} ({{ user.referral_code }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100 dark:border-slate-700">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ root_profile.referrals.count }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Filleuls directs</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ root_profile.total_paid|floatformat:0 }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">FCFA payés</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ total_downline }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Réseau total</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ breadcrumbs|length }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Niveau</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fil d'ariane -->
+    {% if breadcrumbs|length > 1 %}
+    <div class="mb-4 flex items-center gap-2 text-sm overflow-x-auto">
+        <a href="{% url 'admin_all_networks' %}" class="text-primary dark:text-red-400 hover:underline whitespace-nowrap">
+            <i data-lucide="grid-3x3" class="w-4 h-4 inline"></i>
+            Tous les réseaux
+        </a>
+        {% for crumb in breadcrumbs %}
+        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+        {% if forloop.last %}
+        <span class="font-semibold text-gray-800 dark:text-white whitespace-nowrap">{{ crumb.user.username }}</span>
+        {% else %}
+        <a href="{% url 'admin_network_tree' crumb.pk %}" class="text-primary dark:text-red-400 hover:underline whitespace-nowrap">
+            {{ crumb.user.username }}
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Arbre des noeuds -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <h3 class="font-bold text-lg text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            <i data-lucide="git-branch" class="w-5 h-5"></i>
+            Arbre de parrainage complet
+        </h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+            Cliquez sur <i data-lucide="chevron-right" class="w-4 h-4 inline"></i> pour afficher/masquer les enfants
+        </p>
+
+        {% if children %}
+        <div class="space-y-4">
+            {% for child in children %}
+            <div class="network-node-wrapper">
+                <!-- Parent Node -->
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-slate-700/50 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors {% if child.profile.is_vip %}border-l-4 border-yellow-500{% endif %}">
+                    <button onclick="toggleChildren('child-{{ child.profile.pk }}')" 
+                        class="w-8 h-8 rounded-lg bg-white dark:bg-slate-600 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-500 transition-colors flex-shrink-0">
+                        <i data-lucide="chevron-right" class="w-5 h-5 toggle-icon"></i>
+                    </button>
+                    
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br {% if child.profile.is_vip %}from-yellow-400 to-orange-500{% else %}from-primary to-red-800{% endif %} flex items-center justify-center text-white font-bold flex-shrink-0">
+                        {{ child.profile.user.username|slice:":2"|upper }}
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-gray-800 dark:text-white">{{ child.profile.user.username }}</span>
+                            {% if child.profile.is_vip %}
+                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">VIP</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="users" class="w-3 h-3"></i>
+                                {{ child.children|length }} enfant(s)
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="banknote" class="w-3 h-3"></i>
+                                {{ child.profile.total_paid|floatformat:0 }} FCFA
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="code" class="w-3 h-3"></i>
+                                {{ child.profile.referral_code }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 flex-shrink-0">
+                        <a href="{% url 'admin_user_detail' child.profile.pk %}" 
+                            class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                            title="Voir profil">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </a>
+                        <a href="{% url 'admin_network_tree' child.profile.pk %}" 
+                            class="p-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                            title="Voir réseau">
+                            <i data-lucide="git-branch" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Children Container -->
+                <div id="child-{{ child.profile.pk }}" class="children-container ml-8 pl-4 border-l-2 border-dashed border-gray-200 dark:border-slate-600 space-y-3" style="display: none;">
+                    {% if child.children %}
+                    {% for grandchild in child.children %}
+                    <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-700/30 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors {% if grandchild.profile.is_vip %}border-l-4 border-yellow-500{% endif %}">
+                        <button onclick="toggleChildren('grandchild-{{ grandchild.profile.pk }}')" 
+                            class="w-7 h-7 rounded-md bg-white dark:bg-slate-600 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-500 transition-colors flex-shrink-0">
+                            <i data-lucide="chevron-right" class="w-4 h-4 toggle-icon"></i>
+                        </button>
+                        
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br {% if grandchild.profile.is_vip %}from-yellow-400 to-orange-500{% else %}from-blue-500 to-blue-700{% endif %} flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
+                            {{ grandchild.profile.user.username|slice:":2"|upper }}
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-gray-800 dark:text-white text-sm">{{ grandchild.profile.user.username }}</span>
+                                {% if grandchild.profile.is_vip %}
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">VIP</span>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                <span class="flex items-center gap-1">
+                                    <i data-lucide="users" class="w-3 h-3"></i>
+                                    {{ grandchild.children|length }} enfant(s)
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <i data-lucide="banknote" class="w-3 h-3"></i>
+                                    {{ grandchild.profile.total_paid|floatformat:0 }} FCFA
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 flex-shrink-0">
+                            <a href="{% url 'admin_user_detail' grandchild.profile.pk %}" 
+                                class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                            </a>
+                            <a href="{% url 'admin_network_tree' grandchild.profile.pk %}" 
+                                class="p-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                                <i data-lucide="git-branch" class="w-3.5 h-3.5"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Great-grandchildren -->
+                    {% if grandchild.children %}
+                    <div id="grandchild-{{ grandchild.profile.pk }}" class="children-container ml-6 pl-3 border-l-2 border-dashed border-gray-200 dark:border-slate-600 space-y-2" style="display: none;">
+                        {% for greatgrandchild in grandchild.children %}
+                        <div class="flex items-center gap-2 p-2.5 rounded-md bg-gray-50 dark:bg-slate-700/30 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors {% if greatgrandchild.profile.is_vip %}border-l-4 border-yellow-500{% endif %}">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br {% if greatgrandchild.profile.is_vip %}from-yellow-400 to-orange-500{% else %}from-purple-500 to-purple-700{% endif %} flex items-center justify-center text-white font-bold flex-shrink-0 text-xs">
+                                {{ greatgrandchild.profile.user.username|slice:":2"|upper }}
+                            </div>
+                            
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-gray-800 dark:text-white text-xs">{{ greatgrandchild.profile.user.username }}</span>
+                                    {% if greatgrandchild.profile.is_vip %}
+                                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">VIP</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                                    <span>{{ greatgrandchild.profile.total_paid|floatformat:0 }} FCFA</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-1 flex-shrink-0">
+                                <a href="{% url 'admin_user_detail' greatgrandchild.profile.pk %}" 
+                                    class="p-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                                    <i data-lucide="user" class="w-3 h-3"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                        <i data-lucide="inbox" class="w-8 h-8 inline mb-2 opacity-50"></i>
+                        <p>Aucun enfant</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+                <i data-lucide="users" class="w-12 h-12 text-gray-400"></i>
+            </div>
+            <h4 class="font-semibold text-gray-800 dark:text-white mb-2">Aucun enfant</h4>
+            <p class="text-gray-500 dark:text-gray-400 text-sm max-w-md">
+                {{ root_profile.user.username }} n'a pas encore de filleuls dans son réseau de parrainage.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleChildren(id) {
+    const container = document.getElementById(id);
+    const toggle = container.previousElementSibling.querySelector('.toggle-icon');
+    
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        toggle.style.transform = 'rotate(90deg)';
+    } else {
+        container.style.display = 'none';
+        toggle.style.transform = 'rotate(0deg)';
+    }
+}
+</script>
+{% endblock %}

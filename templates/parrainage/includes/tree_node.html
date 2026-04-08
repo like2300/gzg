@@ -1,0 +1,70 @@
+{% comment %}
+Template récursif pour afficher l'arbre de parrainage (Poupées Russes)
+Usage: {% include 'parrainage/includes/tree_node.html' with tree=downline_tree %}
+
+Navigation infinie : cliquez sur un parrain pour voir ses enfants
+{% endcomment %}
+
+{% for node in tree %}
+<div class="tree-node level-{{ node.level }}">
+    <div class="tree-header">
+        <div class="tree-user-info">
+            <div class="tree-avatar" style="background: {% cycle '#dc2626' '#6366f1' '#10b981' '#f59e0b' '#ec4899' '#8b5cf6' %}">
+                {{ node.profile.user.username|slice:":2"|upper }}
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold">
+                    <a href="{% url 'view_parrain_tree' node.profile.pk %}" class="tree-node-link">
+                        {{ node.profile.user.username }}
+                    </a>
+                </h5>
+                <small class="text-muted">
+                    <i class="bi bi-code-slash"></i> {{ node.profile.referral_code }}
+                    {% if node.profile.is_vip %}
+                    <span class="badge-vip ms-2">
+                        <i class="bi bi-star-fill"></i> VIP
+                    </span>
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+        <div class="tree-stats">
+            <div class="tree-stat">
+                <strong class="text-primary">{{ node.profile.total_paid|floatformat:0 }} FCFA</strong>
+                <small>Payé</small>
+            </div>
+            <div class="tree-stat">
+                <strong class="{% if node.profile.progress_percent >= 100 %}text-success{% else %}text-warning{% endif %}">
+                    {{ node.profile.progress_percent|floatformat:0 }}%
+                </strong>
+                <small>Progression</small>
+            </div>
+            <div class="tree-stat">
+                <strong class="text-info">{{ node.profile.referrals.count }}</strong>
+                <small>Filleuls</small>
+            </div>
+            <div class="tree-stat">
+                <small class="text-muted">{{ node.profile.user.date_joined|date:"d/m/Y" }}</small>
+            </div>
+            <div class="tree-stat">
+                <a href="{% url 'view_child_detail' node.profile.pk %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-eye"></i> Voir
+                </a>
+                <a href="{% url 'view_parrain_tree' node.profile.pk %}" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-diagram-3"></i> Ses enfants
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if node.children %}
+    <div class="tree-children">
+        {% include 'parrainage/includes/tree_node.html' with tree=node.children %}
+    </div>
+    {% else %}
+    <div class="text-muted small mt-2 ms-3">
+        <i class="bi bi-info-circle"></i> Aucun filleul
+    </div>
+    {% endif %}
+</div>
+{% endfor %}

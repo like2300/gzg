@@ -1,0 +1,497 @@
+{% extends 'parrainage/base.html' %}
+
+{% block title %}Mon Réseau - GZG{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Referrals Page Styles */
+    .referrals-container {
+        padding-bottom: 100px;
+    }
+
+    /* Header */
+    .referrals-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64748b;
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-radius: 10px;
+        transition: all 0.2s;
+        margin-bottom: 0.75rem;
+    }
+
+    .back-btn:active {
+        background: #f1f5f9;
+        transform: translateX(-2px);
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .page-subtitle {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    /* Stats Grid - Horizontal Scroll */
+    .stats-scroll {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 0.5rem;
+        scroll-padding: 0.5rem;
+        position: relative;
+    }
+
+    .stats-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .stats-scroll::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: calc(100% - 1rem);
+        background: linear-gradient(to right, transparent, rgba(248, 250, 252, 0.9));
+        pointer-events: none;
+        border-radius: 0 16px 16px 0;
+    }
+
+    .stat-box {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        flex: 0 0 calc(50% - 12px);
+        min-width: 150px;
+        scroll-snap-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .stat-box:active {
+        transform: scale(0.98);
+    }
+
+    .stat-box-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-box-icon-direct {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+    }
+
+    .stat-box-icon-total {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+    }
+
+    .stat-box-icon-vip {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .stat-box-icon-earned {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .stat-box-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-box-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Section Header */
+    .section-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+
+    .section-title-modern {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-badge {
+        background: #f1f5f9;
+        color: #64748b;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Referrals List */
+    .referrals-list-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1rem;
+    }
+
+    .referrals-list-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .referrals-list-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .referrals-list-body {
+        padding: 0;
+    }
+
+    .referral-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.2s;
+    }
+
+    .referral-item:last-child {
+        border-bottom: none;
+    }
+
+    .referral-item:hover {
+        background: #f8fafc;
+    }
+
+    .referral-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+        font-size: 0.95rem;
+    }
+
+    .referral-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .referral-name {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .referral-code {
+        font-size: 0.8rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .referral-status {
+        flex-shrink: 0;
+        margin-left: 1rem;
+        text-align: right;
+    }
+
+    .vip-badge-modern {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .progress-mini {
+        width: 60px;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 0.35rem;
+    }
+
+    .progress-mini-bar {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-percent {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    /* Empty State */
+    .empty-state-referrals {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #dc2626;
+    }
+
+    .empty-state-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Action Button */
+    .action-btn-modern {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: white;
+        border: 2px solid #dc2626;
+        color: #dc2626;
+        border-radius: 16px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+
+    .action-btn-modern:active {
+        background: #dc2626;
+        color: white;
+        transform: scale(0.98);
+    }
+
+    /* Scroll hint */
+    .scroll-hint {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    /* Animations */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .slide-up {
+        animation: slideUp 0.4s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="referrals-container slide-up">
+    
+    <!-- Header -->
+    <div class="referrals-header">
+        <a href="{% url 'dashboard' %}" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+            <span>Retour</span>
+        </a>
+        <h1 class="page-title">
+            <i class="bi bi-people-fill" style="color: #dc2626;"></i>
+            Mon Réseau
+        </h1>
+        <p class="page-subtitle">Gérez votre réseau de parrainage</p>
+    </div>
+
+    <!-- Stats Grid - Horizontal Scroll -->
+    <div class="section-header-modern">
+        <h6 class="section-title-modern">
+            <i class="bi bi-bar-chart-fill" style="color: #dc2626;"></i>
+            Statistiques
+        </h6>
+        <span class="scroll-hint">
+            <i class="bi bi-chevron-double-right"></i> Glissez
+        </span>
+    </div>
+
+    <div class="stats-scroll">
+        <div class="stat-box">
+            <div class="stat-box-icon stat-box-icon-direct">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-box-value">{{ total_referrals }}</div>
+            <div class="stat-box-label">Filleuls directs</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-box-icon stat-box-icon-total">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <div class="stat-box-value" style="color: #6366f1;">{{ total_downline }}</div>
+            <div class="stat-box-label">Réseau total</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-box-icon stat-box-icon-vip">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div class="stat-box-value" style="color: #f59e0b;">{{ vip_referrals }}</div>
+            <div class="stat-box-label">Filleuls VIP</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-box-icon stat-box-icon-earned">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="stat-box-value" style="color: #10b981;">{{ total_earned|floatformat:0 }}</div>
+            <div class="stat-box-label">Cumulé (FCFA)</div>
+        </div>
+    </div>
+
+    <!-- Referrals List -->
+    <div class="section-header-modern">
+        <h6 class="section-title-modern">
+            <i class="bi bi-list-ul" style="color: #dc2626;"></i>
+            Filleuls Directs
+        </h6>
+        <span class="section-badge">{{ referrals.count }}</span>
+    </div>
+
+    <div class="referrals-list-card">
+        <div class="referrals-list-body">
+            {% if referrals %}
+                {% for referral in referrals %}
+                <div class="referral-item">
+                    <div class="referral-avatar" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                        {{ referral.user.username|slice:":2"|upper }}
+                    </div>
+                    <div class="referral-info">
+                        <div class="referral-name">{{ referral.user.username }}</div>
+                        <div class="referral-code">
+                            <i class="bi bi-person-badge"></i>
+                            {{ referral.referral_code }}
+                        </div>
+                    </div>
+                    <div class="referral-status">
+                        {% if referral.is_vip %}
+                        <span class="vip-badge-modern">
+                            <i class="bi bi-check-circle-fill"></i>
+                            VIP
+                        </span>
+                        {% else %}
+                        <div class="progress-mini">
+                            <div class="progress-mini-bar"
+                                 style="width: {{ referral.progress_percent }}%;
+                                        background: {% if referral.progress_percent >= 100 %}#10b981{% elif referral.progress_percent >= 50 %}#f59e0b{% else %}#dc2626{% endif %};">
+                            </div>
+                        </div>
+                        <div class="progress-percent">{{ referral.progress_percent|floatformat:0 }}%</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state-referrals">
+                <div class="empty-state-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h6 class="empty-state-title">Aucun filleul direct</h6>
+                <p class="empty-state-text">Partagez votre lien de parrainage pour commencer à construire votre réseau</p>
+                <a href="{% url 'dashboard' %}" class="action-btn-modern">
+                    <i class="bi bi-qr-code"></i>
+                    Voir mon lien de parrainage
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if referrals %}
+    <!-- Action Button -->
+    <a href="{% url 'network_tree' %}" class="action-btn-modern">
+        <i class="bi bi-diagram-3"></i>
+        Voir l'arbre complet
+    </a>
+    {% endif %}
+
+</div>
+{% endblock %}

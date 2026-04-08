@@ -1,0 +1,175 @@
+{% extends 'parrainage/admin/admin_base.html' %}
+
+{% block title %}Paramètres - GZG{% endblock %}
+
+{% block content %}
+<!-- Settings Page -->
+<section class="animate-slide-up">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Paramètres de l'application</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Configurez le quota global pour le statut VIP</p>
+        </div>
+        <a href="{% url 'admin_dashboard' %}" class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Retour</span>
+        </a>
+    </div>
+
+    <!-- Quota Settings Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 max-w-2xl">
+        <div class="mb-6">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 bg-gradient-to-br from-primary to-red-700 rounded-xl flex items-center justify-center">
+                    <i data-lucide="settings" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">Quota Global VIP</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Montant requis pour devenir VIP</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Current Quota Display -->
+            <div class="p-4 bg-gradient-to-r from-primary/10 to-red-700/10 dark:from-red-900/20 dark:to-red-900/10 rounded-xl border border-primary/20 dark:border-red-800/30">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">Quota actuel</p>
+                        <p class="text-3xl font-bold text-primary dark:text-red-400">{{ quota|floatformat:0 }} FCFA</p>
+                    </div>
+                    <div class="w-16 h-16 bg-primary/20 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                        <i data-lucide="target" class="w-8 h-8 text-primary dark:text-red-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Quota Input -->
+            <div>
+                <label for="required_quota" class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <i data-lucide="banknote" class="w-4 h-4 inline mr-1"></i>
+                    Nouveau montant (FCFA)
+                </label>
+                <div class="relative">
+                    <input 
+                        type="number" 
+                        name="required_quota" 
+                        id="required_quota" 
+                        required 
+                        min="1" 
+                        step="any"
+                        value="{{ quota|floatformat:0 }}"
+                        class="w-full px-4 py-3 pl-12 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-sm transition-all font-semibold"
+                        placeholder="Ex: 100000"
+                    >
+                    <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <span class="text-lg font-bold">FCFA</span>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                    Ce montant s'applique à tous les utilisateurs pour atteindre le statut VIP
+                </p>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-3 pt-4 border-t border-gray-100 dark:border-slate-700">
+                <button type="submit"
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-primary to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-semibold transition-all shadow-lg shadow-red-900/20 flex items-center justify-center gap-2 text-sm">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    Enregistrer les modifications
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="grid md:grid-cols-2 gap-4 max-w-2xl mt-6">
+        <!-- How it works -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
+            <div class="flex items-start gap-3">
+                <i data-lucide="lightbulb" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <h4 class="font-semibold text-blue-800 dark:text-blue-200 text-sm mb-2">Comment ça marche ?</h4>
+                    <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                        Le quota global détermine le montant total que chaque utilisateur doit payer pour obtenir le statut VIP et accéder à toutes les fonctionnalités.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact -->
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800 p-5">
+            <div class="flex items-start gap-3">
+                <i data-lucide="trending-up" class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <h4 class="font-semibold text-green-800 dark:text-green-200 text-sm mb-2">Impact</h4>
+                    <p class="text-xs text-green-700 dark:text-blue-300 leading-relaxed">
+                        La modification du quota affecte tous les utilisateurs non-VIP. Les utilisateurs déjà VIP ne sont pas impactés.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 max-w-2xl mt-6">
+        <h4 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            <i data-lucide="circle-help" class="w-5 h-5 text-primary"></i>
+            Statistiques rapides
+        </h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                <p class="text-2xl font-bold text-primary dark:text-red-400">{{ quota|floatformat:0 }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Quota (FCFA)</p>
+            </div>
+            <div class="text-center p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ total_vip|default:0 }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Utilisateurs VIP</p>
+            </div>
+            <div class="text-center p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ total_non_vip|default:0 }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">En cours</p>
+            </div>
+            <div class="text-center p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ total_users|default:0 }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-format the quota input on focus
+    const quotaInput = document.getElementById('required_quota');
+    
+    quotaInput.addEventListener('focus', function() {
+        this.select();
+    });
+    
+    // Confirm before submitting if value changed significantly
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const newValue = parseFloat(quotaInput.value);
+        const currentValue = {{ quota|floatformat:0 }};
+        
+        if (Math.abs(newValue - currentValue) > currentValue * 0.5) {
+            const changePercent = ((newValue - currentValue) / currentValue * 100).toFixed(1);
+            const message = newValue > currentValue 
+                ? `Vous augmentez le quota de ${changePercent}%. Êtes-vous sûr ?`
+                : `Vous réduisez le quota de ${Math.abs(changePercent)}%. Êtes-vous sûr ?`;
+            
+            if (!confirm(message)) {
+                e.preventDefault();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
