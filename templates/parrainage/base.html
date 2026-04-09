@@ -372,15 +372,6 @@
             color: white;
         }
 
-        /* === MESSAGES === */
-        .alert-mobile {
-            border-radius: var(--radius-md);
-            border: none;
-            padding: 1rem;
-            margin: 1rem;
-            box-shadow: var(--shadow-md);
-        }
-
         /* === AUTH PAGES === */
         .auth-container {
             min-height: 100vh;
@@ -621,11 +612,12 @@
 
     <!-- Messages Modal -->
     {% if messages %}
-    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                 <div class="modal-body text-center p-4">
                     {% for message in messages %}
+                    {% if forloop.first %}
                     <div id="message-icon-container">
                         {% if message.tags == 'success' %}
                         <div class="message-icon bg-success">
@@ -650,6 +642,7 @@
                         {% endif %}
                     </div>
                     <p class="mt-3 mb-0 fw-semibold" id="message-text">{{ message }}</p>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -685,6 +678,11 @@
             opacity: 0.5;
             backdrop-filter: blur(4px);
         }
+
+        /* Empêcher le scroll quand le modal est ouvert */
+        body.modal-open {
+            overflow: hidden !important;
+        }
     </style>
     {% endif %}
 
@@ -700,17 +698,30 @@
     {% if messages %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+            const messageModal = new bootstrap.Modal(document.getElementById('messageModal'), {
+                backdrop: true,
+                keyboard: true
+            });
             messageModal.show();
 
-            // Auto-close after 3 seconds
+            // Auto-close after 3.5 seconds
             setTimeout(function() {
                 messageModal.hide();
-            }, 3000);
+            }, 3500);
 
-            // Close when clicking on the modal body
-            document.querySelector('#messageModal .modal-body').addEventListener('click', function() {
-                messageModal.hide();
+            // Fermer en cliquant sur le modal
+            document.getElementById('messageModal').addEventListener('click', function(e) {
+                // Fermer seulement si on clique sur le backdrop (arrière-plan)
+                if (e.target === this || e.target.classList.contains('modal-content')) {
+                    messageModal.hide();
+                }
+            });
+
+            // Fermer avec la touche Echap
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    messageModal.hide();
+                }
             });
         });
     </script>
