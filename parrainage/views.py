@@ -1057,3 +1057,13 @@ def csrf_failure(request, reason=""):
 def error_403_view(request, exception=None):
     """Vue générique pour les erreurs 403"""
     return render(request, 'parrainage/errors/403.html', status=403)
+
+
+def error_404_view(request, exception=None):
+    """Vue pour les erreurs 404 - Page non trouvée"""
+    return render(request, 'parrainage/errors/404.html', status=404)
+
+
+def error_500_view(request):
+    """Vue pour les erreurs 500 - Erreur serveur"""
+    return render(request, 'parrainage/errors/500.html', status=500)

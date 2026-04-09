@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-w2syq6^9u%jwzpbxd-%oinkt92l-^0jyfk!@f)e2z&5q_vvwp4"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["gzg.alwaysdata.net"]
+ALLOWED_HOSTS = ["gzg.alwaysdata.net", "", "localhost", "127.0.0.1"]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
