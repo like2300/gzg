@@ -1047,3 +1047,13 @@ def service_worker(request):
         return response
     except FileNotFoundError:
         raise Http404("Service worker not found")
+
+
+def csrf_failure(request, reason=""):
+    """Vue personnalisée pour les erreurs CSRF (403)"""
+    return render(request, 'parrainage/errors/403_csrf.html', {'reason': reason}, status=403)
+
+
+def error_403_view(request, exception=None):
+    """Vue générique pour les erreurs 403"""
+    return render(request, 'parrainage/errors/403.html', status=403)

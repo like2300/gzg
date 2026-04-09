@@ -25,9 +25,16 @@ SECRET_KEY = "django-insecure-w2syq6^9u%jwzpbxd-%oinkt92l-^0jyfk!@f)e2z&5q_vvwp4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["gzg.alwaysdata.net"]
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "https://omerpay.share.zrok.io"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "https://omerpay.share.zrok.io",
+    "https://gzg.alwaysdata.net/admin",
+]
+
+# Custom CSRF failure view
+CSRF_FAILURE_VIEW = "parrainage.views.csrf_failure"
 
 # Application definition
 
