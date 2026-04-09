@@ -642,9 +642,19 @@
             <p class="fw-bold mb-0">Félicitations ! Vous êtes VIP</p>
             <p class="mb-0" style="font-size: 0.8rem; opacity: 0.9;">Accès complet aux marchés</p> <br> <br>
             <p class="mb-2" style="font-size: 0.8rem; opacity: 0.9;">
-                Télécharge le plan d'affaire
+                Télécharge tes documents
             </p>
-            <a class="bg-white  m-2 p-2 text-black  rounded-full text-decoration-none" href="{% static 'fils/TABLEAU DES GAINS ACTUELS.pdf' %}">Télécharge</a>
+            {% if pdf_documents %}
+                {% for doc in pdf_documents %}
+                <a class="bg-white m-2 p-2 text-black rounded-full text-decoration-none d-inline-block" 
+                   href="{% url 'download_pdf' pk=doc.pk %}" 
+                   target="_blank">
+                    <i class="bi bi-file-earmark-pdf-fill text-danger"></i> {{ doc.title }}
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="mb-0" style="font-size: 0.8rem;">Aucun document disponible pour le moment</p>
+            {% endif %}
         </div>
         {% else %}
         <div class="p-3" style="background: rgba(245, 158, 11, 0.1); border-radius: 16px; text-align: center;">
@@ -656,6 +666,36 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- Documents Section (Available for all users) -->
+    {% if pdf_documents %}
+    <div class="section-card">
+        <div class="section-header">
+            <h5 class="section-title">
+                <i class="bi bi-file-earmark-pdf-fill" style="color: #dc2626;"></i>
+                Documents disponibles
+            </h5>
+        </div>
+        <div class="section-body">
+            {% for doc in pdf_documents %}
+            <div class="modern-list-item">
+                <div class="list-avatar" style="background: linear-gradient(135deg, #dc2626, #991b1b);">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                </div>
+                <div class="list-content">
+                    <div class="list-title">{{ doc.title }}</div>
+                    <div class="list-subtitle">{{ doc.description|truncatechars:50|default:"Document PDF" }}</div>
+                </div>
+                <div class="list-action">
+                    <a href="{% url 'download_pdf' pk=doc.pk %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="bi bi-download"></i> Télécharger
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Referrals Section -->
     <div class="section-card">

@@ -5,8 +5,9 @@ from django import forms
 from django.urls import path
 from django.http import JsonResponse
 from django.db.models import Q
+from django.utils.html import format_html
 from unfold.admin import ModelAdmin
-from .models import GlobalSettings, Profile, Payment
+from .models import GlobalSettings, Profile, Payment, PDFDocument
 
 
 class PaymentAdminForm(forms.ModelForm):
@@ -187,3 +188,41 @@ class PaymentAdmin(ModelAdmin):
             })
 
         return JsonResponse({'results': results})
+
+
+@admin.register(PDFDocument)
+class PDFDocumentAdmin(ModelAdmin):
+    list_display = ['title', 'is_active', 'require_vip', 'file_size_display', 'date_created']
+    list_filter = ['is_active', 'require_vip', 'date_created']
+    search_fields = ['title', 'description']
+    readonly_fields = ['date_created', 'date_updated', 'file_size_display']
+
+    fieldsets = (
+        ("Informations du Document", {
+            "fields": ("title", "description"),
+        }),
+        ("Fichier PDF", {
+            "fields": ("file", "file_size_display"),
+            "description": "Téléversez le fichier PDF ici"
+        }),
+        ("Paramètres d'Accès", {
+            "fields": ("is_active", "require_vip"),
+            "description": "Contrôlez la visibilité du document"
+        }),
+        ("Dates", {
+            "fields": ("date_created", "date_updated"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    def file_size_display(self, obj):
+        if obj.file:
+            size_kb = round(obj.file.size / 1024, 2)
+            return f"{size_kb} Ko"
+        return "N/A"
+    file_size_display.short_description = "Taille du fichier"
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Additional logic can be added here if needed
+        pass

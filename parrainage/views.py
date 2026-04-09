@@ -5,11 +5,12 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Sum, Count, Q
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse, Http404
 from django.core.paginator import Paginator
 from decimal import Decimal
 from functools import wraps
-from .models import Profile, Payment, GlobalSettings
+import os
+from .models import Profile, Payment, GlobalSettings, PDFDocument
 
 
 def is_admin(user):
@@ -148,6 +149,14 @@ def dashboard_view(request):
     payments = profile.payments.all()[:10]  # 10 derniers paiements
     referrals = profile.referrals.all()[:10]  # 10 premiers filleuls
 
+    # Récupérer les documents PDF disponibles
+    # Si VIP: tous les documents actifs
+    # Si non-VIP: seulement les documents qui ne requièrent pas VIP
+    if profile.is_vip:
+        pdf_documents = PDFDocument.objects.filter(is_active=True)
+    else:
+        pdf_documents = PDFDocument.objects.filter(is_active=True, require_vip=False)
+
     # Calculer le stroke-dashoffset pour la progression circulaire
     # Circonférence = 2 * π * r = 2 * 3.14 * 70 ≈ 440
     # stroke-dashoffset = 440 - (440 * progress_percent / 100)
@@ -161,6 +170,7 @@ def dashboard_view(request):
         'referrals': referrals,
         'stroke_dashoffset': stroke_dashoffset,
         'is_profile_complete': profile.is_profile_complete,
+        'pdf_documents': pdf_documents,
     }
 
     return render(request, 'parrainage/dashboard.html', context)
@@ -990,5 +1000,50 @@ def admin_settings_view(request):
         'total_vip': total_vip,
         'total_non_vip': total_non_vip,
     }
-    
+
     return render(request, 'parrainage/admin/admin_settings.html', context)
+
+
+@login_required
+def download_pdf(request, pk):
+    """Télécharger un document PDF"""
+    pdf_document = get_object_or_404(PDFDocument, pk=pk, is_active=True)
+
+    # Vérifier si le document est réservé aux VIP
+    if pdf_document.require_vip and not request.user.profile.is_vip:
+        messages.error(request, 'Ce document est réservé aux utilisateurs VIP.')
+        return redirect('dashboard')
+
+    # Vérifier que le fichier existe
+    if not pdf_document.file:
+        raise Http404("Fichier non disponible")
+
+    # Ouvrir et servir le fichier
+    try:
+        response = FileResponse(
+            pdf_document.file.open('rb'),
+            content_type='application/pdf'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{pdf_document.title}.pdf"'
+        return response
+    except Exception as e:
+        raise Http404(f"Erreur lors du téléchargement: {str(e)}")
+
+
+def service_worker(request):
+    """Servir le fichier service-worker.js pour la PWA"""
+    from django.conf import settings
+    from django.http import HttpResponse
+    import os
+
+    sw_path = os.path.join(settings.STATIC_ROOT, 'parrainage', 'js', 'service-worker.js')
+    
+    try:
+        with open(sw_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        response = HttpResponse(content, content_type='text/javascript')
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
+    except FileNotFoundError:
+        raise Http404("Service worker not found")

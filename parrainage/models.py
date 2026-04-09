@@ -196,3 +196,39 @@ class Payment(models.Model):
         # On met à jour le total cumulé du profil
         self.profile.total_paid += self.amount
         self.profile.save()
+
+
+# --- DOCUMENTS PDF ---
+class PDFDocument(models.Model):
+    """
+    Documents PDF téléchargeables accessibles depuis le dashboard
+    """
+    title = models.CharField(max_length=200, help_text="Titre du document")
+    description = models.TextField(blank=True, help_text="Description courte du document")
+    file = models.FileField(upload_to='documents/pdfs/', help_text="Fichier PDF à télécharger")
+    is_active = models.BooleanField(default=True, help_text="Document visible par les utilisateurs")
+    require_vip = models.BooleanField(default=False, help_text="Réservé aux utilisateurs VIP uniquement")
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date_created']
+        verbose_name = "Document PDF"
+        verbose_name_plural = "Documents PDF"
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def file_size(self):
+        """Retourne la taille du fichier en Ko"""
+        if self.file:
+            return round(self.file.size / 1024, 2)
+        return 0
+
+    @property
+    def file_url(self):
+        """Retourne l'URL du fichier"""
+        if self.file:
+            return self.file.url
+        return ''
