@@ -215,6 +215,17 @@
         text-decoration: underline;
     }
 
+    .badge-parrain {
+        display: inline-block;
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-left: 0.35rem;
+    }
+
     .features-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -349,7 +360,7 @@
                 <br>
                 <a href="{% url 'register' %}">
                     <i class="bi bi-person-plus"></i>
-                    Créer un compte
+                    Créer un compte <span class="badge badge-parrain">avec parrain uniquement</span>
                 </a>
             </div>
         </form>

@@ -58,35 +58,60 @@ def logout_view(request):
 
 def register_view(request):
     """
-    Page d'inscription avec système de parrainage
+    Page d'inscription avec système de parrainage OBLIGATOIRE
     Le code de parrain est récupéré depuis l'URL (?ref=CODE)
+    SANS parrain, l'inscription est BLOQUÉE
     """
     if request.user.is_authenticated:
         return redirect('dashboard')
-    
+
     ref_code = request.GET.get('ref', '')
     referrer_profile = None
     referral_limit_reached = False
-    
-    if ref_code:
-        try:
-            referrer_profile = Profile.objects.get(referral_code=ref_code)
-            # Vérifier si le parrain a atteint la limite
-            if not referrer_profile.can_refer:
-                referral_limit_reached = True
-                messages.warning(request, 'Ce parrain a atteint le nombre maximum de filleuls (2). Vous pouvez vous inscrire sans code de parrainage.')
-                ref_code = ''
-        except Profile.DoesNotExist:
-            messages.warning(request, 'Code de parrainage invalide.')
-            ref_code = ''
-    
+
+    # === BLOCAGE : Pas de code de parrain = accès interdit ===
+    if not ref_code:
+        messages.error(request, '⛔ L\'inscription sans parrain est interdise. Vous devez avoir un code de parrainage pour vous inscrire.')
+        return redirect('login')
+
+    # Vérifier le code de parrain
+    try:
+        referrer_profile = Profile.objects.get(referral_code=ref_code)
+        # Vérifier si le parrain a atteint la limite
+        if not referrer_profile.can_refer:
+            referral_limit_reached = True
+            messages.error(request, '⛔ Ce parrain a atteint le nombre maximum de filleuls (2). Inscription impossible avec ce code.')
+            return redirect('login')
+    except Profile.DoesNotExist:
+        messages.error(request, '⛔ Code de parrainage invalide. Inscription impossible.')
+        return redirect('login')
+
     if request.method == 'POST':
         username = request.POST.get('username')
         email = request.POST.get('email')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
         referrer_code = request.POST.get('referrer_code', '')
-        
+
+        # === BLOCAGE : Vérifier que le code de parrain est toujours valide ===
+        if not referrer_code:
+            messages.error(request, '⛔ Le code de parrainage est obligatoire.')
+            return render(request, 'parrainage/register.html', {
+                'referrer_code': ref_code,
+                'referrer_profile': referrer_profile,
+                'referral_limit_reached': False
+            })
+
+        # Vérifier que le parrain existe et peut encore parrainer
+        try:
+            referrer = Profile.objects.get(referral_code=referrer_code)
+            if not referrer.can_refer:
+                messages.error(request, '⛔ Ce parrain a atteint le nombre maximum de filleuls. Inscription impossible.')
+                return redirect('login')
+        except Profile.DoesNotExist:
+            messages.error(request, '⛔ Code de parrainage invalide. Inscription impossible.')
+            return redirect('login')
+
         # Validation
         if not username or not email or not password:
             messages.error(request, 'Tous les champs sont obligatoires.')
@@ -104,30 +129,18 @@ def register_view(request):
                     email=email,
                     password=password
                 )
-                
-                # Trouver le parrain
-                referrer = None
-                if referrer_code:
-                    try:
-                        referrer = Profile.objects.get(referral_code=referrer_code)
-                        # Vérifier si le parrain peut encore parrainer
-                        if not referrer.can_refer:
-                            messages.error(request, 'Ce parrain a atteint le nombre maximum de filleuls. Inscription sans parrainage.')
-                            referrer = None
-                    except Profile.DoesNotExist:
-                        pass
-                
-                # Créer le profil
+
+                # Créer le profil avec le parrain OBLIGATOIRE
                 profile = Profile.objects.create(
                     user=user,
                     referrer=referrer
                 )
-                
+
                 # Connecter l'utilisateur
                 login(request, user)
-                messages.success(request, f'Bienvenue {username} ! Votre compte a été créé avec succès.')
+                messages.success(request, f'✅ Bienvenue {username} ! Votre compte a été créé avec succès. Votre parrain est {referrer.user.username}.')
                 return redirect('dashboard')
-    
+
     return render(request, 'parrainage/register.html', {
         'referrer_code': ref_code,
         'referrer_profile': referrer_profile,

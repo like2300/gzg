@@ -265,6 +265,12 @@
         color: #d97706;
     }
 
+    .alert-error {
+        background: rgba(220, 38, 38, 0.1);
+        border: 1px solid rgba(220, 38, 38, 0.2);
+        color: #dc2626;
+    }
+
     .alert-icon {
         font-size: 1.25rem;
         flex-shrink: 0;
@@ -315,19 +321,24 @@
                 <i class="bi bi-person-plus"></i>
             </div>
             <h1 class="register-title">GZG</h1>
-            <p class="register-subtitle">Créez votre compte gratuitement</p>
+            <p class="register-subtitle">Inscription avec parrainage uniquement</p>
         </div>
 
-        <!-- Referral Alert -->
-        {% if referrer_profile and not referral_limit_reached %}
+        <!-- Mandatory Referral Alert -->
+        {% if not referrer_profile %}
+        <div class="alert-modern alert-error">
+            <i class="bi bi-x-circle-fill alert-icon"></i>
+            <span>⛔ <strong>Inscription interdite</strong> - Vous devez avoir un code de parrainage pour vous inscrire.</span>
+        </div>
+        {% elif referrer_profile and not referral_limit_reached %}
         <div class="alert-modern alert-success">
             <i class="bi bi-check-circle-fill alert-icon"></i>
-            <span>Vous avez été parrainé par <strong>{{ referrer_profile.user.username }}</strong></span>
+            <span>✅ Parrainé par <strong>{{ referrer_profile.user.username }}</strong></span>
         </div>
         {% elif referral_limit_reached %}
-        <div class="alert-modern alert-warning">
-            <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
-            <span><strong>Parrainage indisponible</strong> - Le parrain a atteint le nombre maximum de filleuls.</span>
+        <div class="alert-modern alert-error">
+            <i class="bi bi-x-circle-fill alert-icon"></i>
+            <span>⛔ <strong>Inscription impossible</strong> - Ce parrain a atteint la limite de 2 filleuls.</span>
         </div>
         {% endif %}
 
