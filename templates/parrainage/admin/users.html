@@ -20,25 +20,37 @@
     </div>
 
     <!-- Filters -->
-    <form method="get" class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 mb-6">
+    <form method="get" id="filter-form" class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 mb-6">
         <div class="flex flex-wrap gap-4 items-center">
+            <!-- Instant Search Input -->
             <div class="relative flex-1 min-w-[200px]">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-400"></i>
-                <input type="text" name="search" placeholder="Rechercher (nom, email, code...)" value="{{ search }}" 
+                <input type="text" id="instant-search" placeholder="Recherche instantanée (nom, email, matricule, code...)" value="{{ search }}"
                     class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white">
+                <!-- Search indicator -->
+                <div id="search-indicator" class="absolute right-3 top-2.5 hidden">
+                    <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
             </div>
-            <select name="status" class="px-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <select id="status-filter" name="status" class="px-4 py-2 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20">
                 <option value="">Tous les statuts</option>
                 <option value="vip" {% if status == 'vip' %}selected{% endif %}>VIP</option>
                 <option value="non_vip" {% if status == 'non_vip' %}selected{% endif %}>Non VIP</option>
             </select>
             <button type="submit" class="px-6 py-2 bg-primary hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
                 <i data-lucide="filter" class="w-4 h-4"></i>
-                Filtrer
+                <span class="hidden sm:inline">Filtre serveur</span>
             </button>
             <a href="{% url 'admin_users' %}" class="px-6 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
                 Reset
             </a>
+        </div>
+        <!-- Search result counter -->
+        <div id="search-counter" class="mt-2 text-sm text-gray-500 dark:text-gray-400 hidden">
+            <span id="visible-count">0</span> utilisateur(s) affiché(s) sur <span id="total-count">0</span>
         </div>
     </form>
 
@@ -49,6 +61,7 @@
                 <thead class="bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 text-xs uppercase font-semibold">
                     <tr>
                         <th class="px-6 py-4">Utilisateur</th>
+                        <th class="px-6 py-4">Matricule</th>
                         <th class="px-6 py-4">Code</th>
                         <th class="px-6 py-4">Parrain</th>
                         <th class="px-6 py-4">Filleuls</th>
@@ -72,6 +85,13 @@
                                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ profile.user.email|truncatechars:25 }}</div>
                                 </div>
                             </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if profile.matricule %}
+                            <code class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded font-mono font-bold">{{ profile.matricule }}</code>
+                            {% else %}
+                            <span class="text-xs text-gray-400 italic">Non généré</span>
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             <code class="text-xs bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">{{ profile.referral_code }}</code>
@@ -130,7 +150,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="px-6 py-12 text-center">
+                        <td colspan="10" class="px-6 py-12 text-center">
                             <div class="flex flex-col items-center justify-center">
                                 <div class="p-4 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
                                     <i data-lucide="users" class="w-8 h-8 text-gray-400"></i>
@@ -169,4 +189,151 @@
         {% endif %}
     </div>
 </section>
+
+<!-- No Results Message -->
+<div id="no-results" class="hidden bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-12 text-center mt-6">
+    <div class="flex flex-col items-center justify-center">
+        <div class="p-6 bg-gray-100 dark:bg-slate-700 rounded-full mb-4">
+            <i data-lucide="search-x" class="w-12 h-12 text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Aucun résultat</h3>
+        <p class="text-gray-500 dark:text-gray-400">Aucun utilisateur ne correspond à votre recherche</p>
+        <button onclick="clearInstantSearch()" class="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-red-700 transition-colors">
+            Effacer la recherche
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // === Recherche instantanée ===
+    const searchInput = document.getElementById('instant-search');
+    const statusFilter = document.getElementById('status-filter');
+    const tableBody = document.querySelector('tbody');
+    const noResults = document.getElementById('no-results');
+    const searchIndicator = document.getElementById('search-indicator');
+    const searchCounter = document.getElementById('search-counter');
+    const visibleCountSpan = document.getElementById('visible-count');
+    const totalCountSpan = document.getElementById('total-count');
+    
+    // Compter le total d'utilisateurs
+    const allRows = Array.from(tableBody.querySelectorAll('tr'));
+    const totalCount = allRows.length;
+    totalCountSpan.textContent = totalCount;
+    
+    // Debounce function pour éviter trop de recherches
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Fonction de filtrage instantané
+    function performInstantSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const statusValue = statusFilter.value.toLowerCase();
+        
+        // Afficher l'indicateur de recherche
+        if (searchTerm.length > 0) {
+            searchIndicator.classList.remove('hidden');
+        } else {
+            searchIndicator.classList.add('hidden');
+        }
+        
+        let visibleCount = 0;
+        
+        allRows.forEach(row => {
+            // Vérifier si la ligne est vide (message "aucun utilisateur")
+            if (row.querySelector('td[colspan]')) {
+                return;
+            }
+            
+            // Récupérer toutes les cellules de données
+            const cells = row.querySelectorAll('td');
+            let rowText = '';
+            
+            // Concaténer le texte de toutes les cellules
+            cells.forEach(cell => {
+                rowText += ' ' + cell.textContent.toLowerCase();
+            });
+            
+            // Vérifier le critère de recherche
+            const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
+            
+            // Vérifier le critère de statut
+            let matchesStatus = true;
+            if (statusValue === 'vip') {
+                matchesStatus = rowText.includes('vip');
+            } else if (statusValue === 'non_vip') {
+                matchesStatus = rowText.includes('en cours');
+            }
+            
+            // Afficher/masquer la ligne
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Mettre à jour le compteur
+        visibleCountSpan.textContent = visibleCount;
+        
+        // Afficher/masquer le compteur
+        if (searchTerm.length > 0 || statusValue) {
+            searchCounter.classList.remove('hidden');
+        } else {
+            searchCounter.classList.add('hidden');
+        }
+        
+        // Afficher/masquer le message "aucun résultat"
+        if (visibleCount === 0 && (searchTerm.length > 0 || statusValue)) {
+            noResults.classList.remove('hidden');
+            tableBody.closest('.overflow-x-auto').classList.add('hidden');
+        } else {
+            noResults.classList.add('hidden');
+            tableBody.closest('.overflow-x-auto').classList.remove('hidden');
+        }
+        
+        // Cacher l'indicateur après la recherche
+        searchIndicator.classList.add('hidden');
+    }
+    
+    // Appliquer le debounce à la recherche
+    const debouncedSearch = debounce(performInstantSearch, 300);
+    
+    // Écouteurs d'événements
+    searchInput.addEventListener('input', debouncedSearch);
+    statusFilter.addEventListener('change', performInstantSearch);
+    
+    // Recherche initiale si il y a déjà un terme
+    if (searchInput.value.trim().length > 0) {
+        performInstantSearch();
+    }
+});
+
+// Fonction pour effacer la recherche
+function clearInstantSearch() {
+    const searchInput = document.getElementById('instant-search');
+    const statusFilter = document.getElementById('status-filter');
+    
+    searchInput.value = '';
+    statusFilter.value = '';
+    
+    // Déclencher l'événement input pour réinitialiser le filtre
+    searchInput.dispatchEvent(new Event('input'));
+    statusFilter.dispatchEvent(new Event('change'));
+    
+    searchInput.focus();
+}
+</script>
 {% endblock %}

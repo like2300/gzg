@@ -15,11 +15,25 @@ class GlobalSettings(models.Model):
     Exemple : 100 000 FCFA.
     """
     required_quota = models.DecimalField(
-        max_digits=12, 
-        decimal_places=2, 
+        max_digits=12,
+        decimal_places=2,
         default=100000.00,
         help_text="Le montant total pour devenir VIP et accéder aux marchés."
     )
+    
+    # Préfixe du matricule (ex: AEWR, GZG, etc.)
+    matricule_prefix = models.CharField(
+        max_length=10,
+        default="GZG",
+        help_text="Préfixe du matricule utilisateur (ex: AEWR, GZG). Les numéros seront générés automatiquement."
+    )
+    
+    # Compteur de matricule pour assurer l'unicité
+    matricule_counter = models.PositiveIntegerField(
+        default=10000,
+        help_text="Compteur de départ pour la génération des matricules. Le prochain matricule sera PRÉFIXE + ce numéro."
+    )
+    
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -28,19 +42,78 @@ class GlobalSettings(models.Model):
 
     def save(self, *args, **kwargs):
         # Sécurité pour n'avoir qu'une seule ligne de configuration
-        if not self.pk and GlobalSettings.objects.exists():
+        # Détecter si le quota change
+        old_quota = None
+        if self.pk:
+            try:
+                existing = GlobalSettings.objects.get(pk=self.pk)
+                old_quota = existing.required_quota
+            except GlobalSettings.DoesNotExist:
+                pass
+        elif not self.pk and GlobalSettings.objects.exists():
             raise ValidationError("Il ne peut y avoir qu'une seule configuration globale.")
-        return super().save(*args, **kwargs)
+        
+        # Sauvegarder les modifications
+        super().save(*args, **kwargs)
+        
+        # Si le quota a changé, recalculer les statuts VIP
+        if old_quota is not None and old_quota != self.required_quota:
+            self._recalculer_statuts_vip(old_quota)
+    
+    def _recalculer_statuts_vip(self, old_quota):
+        """
+        Recalcule les statuts VIP après un changement de quota.
+        Règle : 
+        - Si un utilisateur était déjà VIP, il le reste (grandfather clause)
+        - Si un utilisateur n'était pas VIP, on vérifie s'il peut maintenant le devenir
+        """
+        from django.db.models import F
+        
+        # Récupérer tous les profils non-VIP
+        profils_non_vip = Profile.objects.filter(is_vip=False)
+        
+        # Mettre à jour en masse : ceux qui ont atteint le nouveau quota deviennent VIP
+        nouveaux_vip_count = profils_non_vip.filter(
+            total_paid__gte=self.required_quota
+        ).update(is_vip=True)
+        
+        # Log pour admin (optionnel - peut être supprimé en prod)
+        print(f"🔄 Recalcul VIP après changement de quota ({old_quota} → {self.required_quota})")
+        print(f"   ✅ {nouveaux_vip_count} utilisateur(s) deviennent VIP")
+        print(f"   🔒 Les utilisateurs déjà VIP conservent leur statut")
 
     @classmethod
     def get_current_quota(cls):
         config, _ = cls.objects.get_or_create(id=1)
         return config.required_quota
+    
+    @classmethod
+    def get_matricule_prefix(cls):
+        config, _ = cls.objects.get_or_create(id=1)
+        return config.matricule_prefix
+    
+    @classmethod
+    def generate_next_matricule(cls):
+        """Génère le prochain matricule et incrémente le compteur"""
+        config, _ = cls.objects.get_or_create(id=1)
+        matricule = f"{config.matricule_prefix}{config.matricule_counter}"
+        config.matricule_counter += 1
+        config.save(update_fields=['matricule_counter'])
+        return matricule
 
 
 # --- PROFIL UTILISATEUR & RÉSEAU ---
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    # Matricule unique (ex: AEWR576766886)
+    matricule = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Matricule unique généré automatiquement (ex: GZG10001)"
+    )
 
     # Parrainage Binaire (Auto-référencement)
     referrer = models.ForeignKey(
@@ -134,10 +207,14 @@ class Profile(models.Model):
         if not self.referral_code:
             self.referral_code = self.generate_unique_code()
         
-        # 2. Vérifier le statut VIP
+        # 2. Générer le matricule si absent
+        if not self.matricule:
+            self.matricule = GlobalSettings.generate_next_matricule()
+
+        # 3. Vérifier le statut VIP
         if self.total_paid >= GlobalSettings.get_current_quota():
             self.is_vip = True
-            
+
         super().save(*args, **kwargs)
     
     # --- LIMITES DE PARRAINAGE ---

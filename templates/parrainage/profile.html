@@ -235,11 +235,26 @@
             <div class="row g-3">
                 <div class="col-6">
                     <div class="p-3" style="background: var(--bg-color); border-radius: var(--radius-md);">
+                        <small class="text-secondary d-block">Matricule</small>
+                        <strong style="color: var(--primary-color); font-family: monospace; font-size: 0.9rem;">
+                            {% if profile.matricule %}
+                            {{ profile.matricule }}
+                            {% else %}
+                            <span class="text-muted fst-italic">Non généré</span>
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3" style="background: var(--bg-color); border-radius: var(--radius-md);">
                         <small class="text-secondary d-block">Code de parrainage</small>
                         <strong style="color: var(--primary-color);">{{ profile.referral_code }}</strong>
                     </div>
                 </div>
-                <div class="col-6">
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-12">
                     <div class="p-3" style="background: var(--bg-color); border-radius: var(--radius-md);">
                         <small class="text-secondary d-block">Membre depuis</small>
                         <strong style="color: var(--success-color);">{{ user.date_joined|date:"d/m/y" }}</strong>

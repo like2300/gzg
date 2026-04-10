@@ -932,7 +932,8 @@ def admin_all_networks_view(request):
         profiles = profiles.filter(
             Q(user__username__icontains=search) |
             Q(user__email__icontains=search) |
-            Q(referral_code__icontains=search)
+            Q(referral_code__icontains=search) |
+            Q(matricule__icontains=search)
         )
 
     if status == 'vip':
@@ -965,40 +966,83 @@ def admin_settings_view(request):
     """
     Page des paramètres de l'application
     Permet de modifier le quota global requis pour devenir VIP
+    et de configurer le préfixe du matricule
     """
-    quota = GlobalSettings.get_current_quota()
-    
+    config, _ = GlobalSettings.objects.get_or_create(id=1)
+    quota = config.required_quota
+
     # Statistiques pour le template
     total_users = User.objects.count()
     total_vip = Profile.objects.filter(is_vip=True).count()
     total_non_vip = total_users - total_vip
     
+    # Prochain matricule à être généré
+    next_matricule = f"{config.matricule_prefix}{config.matricule_counter}"
+
     if request.method == 'POST':
+        # Mise à jour du quota
         new_quota = request.POST.get('required_quota')
-        
         if new_quota:
             try:
                 new_quota_decimal = Decimal(new_quota)
                 if new_quota_decimal <= 0:
                     raise ValueError("Le montant doit être supérieur à zéro")
                 
-                # Mettre à jour le quota
-                config, _ = GlobalSettings.objects.get_or_create(id=1)
+                # Compter combien d'utilisateurs non-VIP deviendront VIP
+                anciens_vip_count = Profile.objects.filter(is_vip=True).count()
+                futurs_vip_count = Profile.objects.filter(
+                    is_vip=False,
+                    total_paid__gte=new_quota_decimal
+                ).count()
+
                 config.required_quota = new_quota_decimal
-                config.save()
+                config.save()  # Le save() appellera le recalcul automatiquement
                 
-                messages.success(request, f'Quota mis à jour avec succès ! Nouveau montant : {new_quota_decimal} FCFA')
-                return redirect('admin_settings')
+                if futurs_vip_count > 0:
+                    messages.success(request, 
+                        f'✅ Quota mis à jour ! {futurs_vip_count} utilisateur(s) deviennent automatiquement VIP.')
+                else:
+                    messages.success(request, 
+                        f'Quota mis à jour avec succès ! Nouveau montant : {new_quota_decimal} FCFA')
             except ValueError as e:
                 messages.error(request, f'Montant invalide : {str(e)}')
-        else:
-            messages.error(request, 'Veuillez entrer un montant valide')
-    
+        
+        # Mise à jour du préfixe de matricule
+        new_prefix = request.POST.get('matricule_prefix')
+        if new_prefix:
+            new_prefix_upper = new_prefix.strip().upper()
+            if len(new_prefix_upper) >= 2 and new_prefix_upper.isalnum():
+                old_prefix = config.matricule_prefix
+                config.matricule_prefix = new_prefix_upper
+                messages.success(request, f'Préfixe de matricule mis à jour : {old_prefix} → {new_prefix_upper}')
+            else:
+                messages.error(request, 'Le préfixe doit contenir au moins 2 caractères alphanumériques.')
+        
+        # Mise à jour du compteur de matricule
+        new_counter = request.POST.get('matricule_counter')
+        if new_counter:
+            try:
+                new_counter_int = int(new_counter)
+                if new_counter_int < 0:
+                    raise ValueError("Le compteur doit être positif")
+                
+                old_counter = config.matricule_counter
+                config.matricule_counter = new_counter_int
+                messages.success(request, f'Compteur de matricule mis à jour : {old_counter} → {new_counter_int}')
+            except ValueError as e:
+                messages.error(request, f'Compteur invalide : {str(e)}')
+        
+        config.save()
+        return redirect('admin_settings')
+
     context = {
         'quota': quota,
         'total_users': total_users,
         'total_vip': total_vip,
         'total_non_vip': total_non_vip,
+        'matricule_prefix': config.matricule_prefix,
+        'matricule_counter': config.matricule_counter,
+        'next_matricule': next_matricule,
     }
 
     return render(request, 'parrainage/admin/admin_settings.html', context)
