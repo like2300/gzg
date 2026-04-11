@@ -12,6 +12,14 @@
             <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">{{ total_users }} utilisateurs ({{ vip_count }} VIP)</p>
         </div>
         <div class="flex gap-2">
+            <!-- Referral Limit Button -->
+            <button onclick="openReferralLimitModal()" class="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 rounded-lg flex items-center gap-2 hover:bg-yellow-200 dark:hover:bg-yellow-900/30 transition-colors border border-yellow-300 dark:border-yellow-800">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Limite Parrainage</span>
+                <span id="current-limit-badge" class="ml-1 px-2 py-0.5 bg-yellow-200 dark:bg-yellow-900/40 rounded text-xs font-bold">
+                    {{ referral_limit }}
+                </span>
+            </button>
             <a href="{% url 'admin_dashboard' %}" class="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 <span class="hidden sm:inline">Retour</span>
@@ -203,6 +211,92 @@
         </button>
     </div>
 </div>
+
+<!-- Referral Limit Modal -->
+<div id="referral-limit-modal" class="fixed inset-0 z-50 hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeReferralLimitModal()"></div>
+    
+    <!-- Modal Content -->
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-md w-full p-6 animate-slide-up">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                        <i data-lucide="user-plus" class="w-6 h-6 text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Limite de Parrainage</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Paramètre global</p>
+                    </div>
+                </div>
+                <button onclick="closeReferralLimitModal()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-gray-500 dark:text-gray-400"></i>
+                </button>
+            </div>
+
+            <!-- Current Limit Display -->
+            <div class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Limite actuelle</span>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-current-limit" class="text-3xl font-bold text-yellow-700 dark:text-yellow-200">{{ referral_limit }}</span>
+                        <span class="text-sm text-yellow-600 dark:text-yellow-400">filleuls</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <form id="referral-limit-form" onsubmit="updateReferralLimit(event)">
+                {% csrf_token %}
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nouvelle limite de parrainage
+                </label>
+                <div class="flex items-center gap-3 mb-4">
+                    <input 
+                        type="number" 
+                        id="new-limit-input" 
+                        name="limit"
+                        min="1"
+                        value="{{ referral_limit }}"
+                        class="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-lg font-semibold"
+                        required
+                    >
+                </div>
+
+                <!-- Info -->
+                <div class="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                    <div class="flex gap-2">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-xs text-blue-700 dark:text-blue-300">
+                            Cette limite s'applique à <strong>tous les utilisateurs</strong>. Un utilisateur ne pourra plus parrainer plus de cette limite.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-3">
+                    <button 
+                        type="button"
+                        onclick="closeReferralLimitModal()" 
+                        class="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                    >
+                        Annuler
+                    </button>
+                    <button 
+                        type="submit"
+                        id="save-limit-btn"
+                        class="flex-1 px-4 py-3 bg-primary hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>Enregistrer</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -332,8 +426,92 @@ function clearInstantSearch() {
     // Déclencher l'événement input pour réinitialiser le filtre
     searchInput.dispatchEvent(new Event('input'));
     statusFilter.dispatchEvent(new Event('change'));
-    
+
     searchInput.focus();
+}
+
+// === Referral Limit Modal Functions ===
+function openReferralLimitModal() {
+    const modal = document.getElementById('referral-limit-modal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Reinitialize lucide icons in modal
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function closeReferralLimitModal() {
+    const modal = document.getElementById('referral-limit-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function updateReferralLimit(event) {
+    event.preventDefault();
+    
+    const newLimit = document.getElementById('new-limit-input').value;
+    const saveBtn = document.getElementById('save-limit-btn');
+    const originalContent = saveBtn.innerHTML;
+    
+    // Disable button and show loading state
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `
+        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Enregistrement...</span>
+    `;
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Send AJAX request
+    fetch('{% url "update_referral_limit" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            'limit': newLimit
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update all limit displays
+            document.getElementById('current-limit-badge').textContent = data.new_limit;
+            document.getElementById('modal-current-limit').textContent = data.new_limit;
+            document.getElementById('new-limit-input').value = data.new_limit;
+            
+            // Show success message
+            showMessageModal(data.message, 'success');
+            
+            // Close modal after 1 second
+            setTimeout(() => {
+                closeReferralLimitModal();
+            }, 1000);
+        } else {
+            showMessageModal(data.error || 'Une erreur est survenue', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessageModal('Erreur de connexion', 'error');
+    })
+    .finally(() => {
+        // Restore button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalContent;
+        
+        // Reinitialize lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
 }
 </script>
 {% endblock %}

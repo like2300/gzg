@@ -10,7 +10,7 @@ from django.core.paginator import Paginator
 from decimal import Decimal
 from functools import wraps
 import os
-from .models import Profile, Payment, GlobalSettings, PDFDocument
+from .models import Profile, Payment, GlobalSettings, PDFDocument, AppLink
 
 
 def is_admin(user):
@@ -139,13 +139,82 @@ def register_view(request):
                 # Connecter l'utilisateur
                 login(request, user)
                 messages.success(request, f'✅ Bienvenue {username} ! Votre compte a été créé avec succès. Votre parrain est {referrer.user.username}.')
-                return redirect('dashboard')
+                return redirect('download_app')
 
     return render(request, 'parrainage/register.html', {
         'referrer_code': ref_code,
         'referrer_profile': referrer_profile,
         'referral_limit_reached': referral_limit_reached
     })
+
+
+@login_required
+@admin_required
+def update_referral_limit_view(request):
+    """
+    API pour mettre à jour la limite de parrainage globale
+    """
+    if request.method == 'POST':
+        try:
+            new_limit = int(request.POST.get('limit', 2))
+            if new_limit < 1:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'La limite doit être au moins 1'
+                })
+
+            settings, _ = GlobalSettings.objects.get_or_create(id=1)
+            old_limit = settings.referral_limit
+            settings.referral_limit = new_limit
+            settings.save(update_fields=['referral_limit'])
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Limite de parrainage mise à jour: {old_limit} → {new_limit}',
+                'new_limit': new_limit
+            })
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Valeur invalide'
+            })
+
+    return JsonResponse({
+        'success': False,
+        'error': 'Méthode non autorisée'
+    })
+
+
+@login_required
+def download_app_view(request):
+    """
+    Page de téléchargement de l'application
+    - Si mobile: affiche la page avec le lien de téléchargement
+    - Si PC: redirige directement vers le dashboard
+    """
+    # Vérifier si l'utilisateur est sur mobile
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    is_mobile = bool(
+        'mobile' in user_agent or
+        'android' in user_agent or
+        'iphone' in user_agent or
+        'ipad' in user_agent or
+        'ipod' in user_agent
+    )
+
+    # Si c'est un PC, redirection directe vers le dashboard
+    if not is_mobile:
+        return redirect('dashboard')
+
+    # Récupérer le lien Play Store
+    app_link = AppLink.objects.first()
+    play_store_url = app_link.play_store_url if app_link else "https://play.google.com/store/apps"
+
+    context = {
+        'play_store_url': play_store_url,
+    }
+
+    return render(request, 'parrainage/download_app.html', context)
 
 
 @login_required
@@ -595,7 +664,8 @@ def admin_users_view(request):
     total_users = profiles.count()
     vip_count = profiles.filter(is_vip=True).count()
     quota = GlobalSettings.get_current_quota()
-    
+    referral_limit = GlobalSettings.get_referral_limit()
+
     context = {
         'profiles': profiles_page,
         'total_users': total_users,
@@ -603,8 +673,9 @@ def admin_users_view(request):
         'search': search,
         'status': status,
         'quota': quota,
+        'referral_limit': referral_limit,
     }
-    
+
     return render(request, 'parrainage/admin/users.html', context)
 
 

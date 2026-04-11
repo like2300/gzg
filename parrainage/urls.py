@@ -5,6 +5,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
+    path('download-app/', views.download_app_view, name='download_app'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('mes-filleuls/', views.my_referrals_view, name='my_referrals'),
     path('profil/', views.profile_view, name='profile'),
@@ -23,6 +24,7 @@ urlpatterns = [
     # Administration
     path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('admin-users/', views.admin_users_view, name='admin_users'),
+    path('admin-users/update-referral-limit/', views.update_referral_limit_view, name='update_referral_limit'),
     path('admin-users/<int:pk>/', views.admin_user_detail_view, name='admin_user_detail'),
     path('admin-payments/', views.admin_payments_view, name='admin_payments'),
     path('admin-payments/new/', views.admin_new_payment_view, name='admin_new_payment'),

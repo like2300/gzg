@@ -33,7 +33,13 @@ class GlobalSettings(models.Model):
         default=10000,
         help_text="Compteur de départ pour la génération des matricules. Le prochain matricule sera PRÉFIXE + ce numéro."
     )
-    
+
+    # Limite de parrainage (nombre maximum de filleuls directs)
+    referral_limit = models.PositiveIntegerField(
+        default=2,
+        help_text="Nombre maximum de filleuls directs par utilisateur (défaut: 2)"
+    )
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -91,7 +97,12 @@ class GlobalSettings(models.Model):
     def get_matricule_prefix(cls):
         config, _ = cls.objects.get_or_create(id=1)
         return config.matricule_prefix
-    
+
+    @classmethod
+    def get_referral_limit(cls):
+        config, _ = cls.objects.get_or_create(id=1)
+        return config.referral_limit
+
     @classmethod
     def generate_next_matricule(cls):
         """Génère le prochain matricule et incrémente le compteur"""
@@ -138,9 +149,6 @@ class Profile(models.Model):
     # Token de réinitialisation de mot de passe
     reset_token = models.CharField(max_length=64, blank=True, null=True)
     reset_token_expires = models.DateTimeField(blank=True, null=True)
-
-    # Limite de parrainage
-    REFERRAL_LIMIT = 2  # Maximum 2 filleuls directs
 
     def __str__(self):
         return f"Profil de {self.user.username} ({self.referral_code})"
@@ -219,15 +227,20 @@ class Profile(models.Model):
     
     # --- LIMITES DE PARRAINAGE ---
     @property
+    def REFERRAL_LIMIT(self):
+        """Récupère la limite de parrainage depuis les paramètres globaux"""
+        return GlobalSettings.get_referral_limit()
+
+    @property
     def can_refer(self):
         """Vérifie si l'utilisateur peut encore parrainer"""
         return self.referrals.count() < self.REFERRAL_LIMIT
-    
+
     @property
     def referrals_count(self):
         """Nombre de filleuls directs"""
         return self.referrals.count()
-    
+
     @property
     def remaining_referrals(self):
         """Nombre de filleuls restants à parrainer"""
@@ -273,6 +286,41 @@ class Payment(models.Model):
         # On met à jour le total cumulé du profil
         self.profile.total_paid += self.amount
         self.profile.save()
+
+
+# --- APP LINK (PLAY STORE) ---
+class AppLink(models.Model):
+    """
+    Configuration du lien de téléchargement de l'application
+    """
+    play_store_url = models.URLField(
+        max_length=500,
+        default="https://play.google.com/store/apps",
+        help_text="Lien de l'application sur le Play Store"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Afficher la page de téléchargement après l'inscription"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Lien de l'Application"
+        verbose_name_plural = "Lien de l'Application"
+
+    def save(self, *args, **kwargs):
+        # Sécurité pour n'avoir qu'une seule ligne de configuration
+        if not self.pk and AppLink.objects.exists():
+            raise ValidationError("Il ne peut y avoir qu'une seule configuration de lien d'application.")
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_play_store_url(cls):
+        config, _ = cls.objects.get_or_create(id=1)
+        return config.play_store_url
+
+    def __str__(self):
+        return f"Lien Play Store: {self.play_store_url}"
 
 
 # --- DOCUMENTS PDF ---

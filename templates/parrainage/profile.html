@@ -292,7 +292,7 @@
                         <i class="bi bi-link-45deg"></i>
                     </div>
                     <input type="text" class="input-group-input" value="{{ profile.referral_link }}" id="referralLink" readonly>
-                    <button class="btn btn-primary btn-sm" onclick="copyLink()" style="padding: 0.5rem 1rem;">
+                    <button class="btn btn-primary btn-sm" onclick="copyLink(event)" style="padding: 0.5rem 1rem;">
                         <i class="bi bi-clipboard"></i>
                     </button>
                 </div>
@@ -468,12 +468,12 @@ document.getElementById('editProfileModal').addEventListener('click', function(e
     }
 });
 
-function copyLink() {
+function copyLink(e) {
     const input = document.getElementById('referralLink');
     input.select();
     input.setSelectionRange(0, 99999);
     navigator.clipboard.writeText(input.value).then(() => {
-        const btn = event.target.closest('button');
+        const btn = e.target.closest('button');
         const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-check-lg"></i>';
         btn.classList.remove('btn-primary');

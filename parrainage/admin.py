@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.db.models import Q
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin
-from .models import GlobalSettings, Profile, Payment, PDFDocument
+from .models import GlobalSettings, Profile, Payment, PDFDocument, AppLink
 
 
 class PaymentAdminForm(forms.ModelForm):
@@ -50,24 +50,33 @@ class PaymentAdminForm(forms.ModelForm):
 
 @admin.register(GlobalSettings)
 class GlobalSettingsAdmin(ModelAdmin):
-    list_display = ['required_quota', 'updated_at']
+    list_display = ['required_quota', 'referral_limit', 'matricule_prefix', 'updated_at']
     readonly_fields = ['updated_at']
-    
+
     fieldsets = (
         ("Configuration du Quota", {
             "fields": ("required_quota",),
             "description": "Définissez le montant requis pour devenir VIP"
+        }),
+        ("Configuration du Parrainage", {
+            "fields": ("referral_limit",),
+            "description": "Nombre maximum de filleuls directs par utilisateur"
+        }),
+        ("Configuration du Matricule", {
+            "fields": ("matricule_prefix", "matricule_counter"),
+            "description": "Préfixe et compteur pour la génération des matricules",
+            "classes": ("collapse",)
         }),
         ("Informations", {
             "fields": ("updated_at",),
             "classes": ("collapse",)
         }),
     )
-    
+
     def has_add_permission(self, request):
         # Empêcher l'ajout de multiples configurations
         return not GlobalSettings.objects.exists()
-    
+
     def has_delete_permission(self, request, obj=None):
         return False
 
@@ -226,3 +235,28 @@ class PDFDocumentAdmin(ModelAdmin):
         super().save_model(request, obj, form, change)
         # Additional logic can be added here if needed
         pass
+
+
+@admin.register(AppLink)
+class AppLinkAdmin(ModelAdmin):
+    list_display = ['play_store_url', 'is_active', 'updated_at']
+    list_filter = ['is_active']
+    readonly_fields = ['updated_at']
+
+    fieldsets = (
+        ("Configuration du Lien de l'Application", {
+            "fields": ("play_store_url", "is_active"),
+            "description": "Définissez le lien de téléchargement de l'application sur le Play Store"
+        }),
+        ("Informations", {
+            "fields": ("updated_at",),
+            "classes": ("collapse",)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Empêcher l'ajout de multiples configurations
+        return not AppLink.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False

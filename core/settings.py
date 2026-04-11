@@ -25,7 +25,13 @@ SECRET_KEY = "django-insecure-w2syq6^9u%jwzpbxd-%oinkt92l-^0jyfk!@f)e2z&5q_vvwp4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["gzg.alwaysdata.net", "", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    "gzg.alwaysdata.net",
+    "",
+    "localhost",
+    "127.0.0.1",
+    "omerpay.share.zrok.io",
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
