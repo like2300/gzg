@@ -540,12 +540,12 @@
     </div>
 
     <div class="quick-actions">
-        <a href="{% url 'make_payment' %}" class="quick-action-btn">
+        <!--<a href="{% url 'make_payment' %}" class="quick-action-btn">
             <div class="quick-action-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
                 <i class="bi bi-plus-lg"></i>
             </div>
             <span class="quick-action-label">Payer</span>
-        </a>
+        </a>-->
         <a href="{% url 'my_referrals' %}" class="quick-action-btn">
             <div class="quick-action-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
                 <i class="bi bi-people-fill"></i>
@@ -646,8 +646,8 @@
             </p>
             {% if pdf_documents %}
                 {% for doc in pdf_documents %}
-                <a class="bg-white m-2 p-2 text-black rounded-full text-decoration-none d-inline-block" 
-                   href="{% url 'download_pdf' pk=doc.pk %}" 
+                <a class="bg-white m-2 p-2 text-black rounded-full text-decoration-none d-inline-block"
+                   href="{% url 'download_pdf' pk=doc.pk %}"
                    target="_blank">
                     <i class="bi bi-file-earmark-pdf-fill text-danger"></i> {{ doc.title }}
                 </a>
