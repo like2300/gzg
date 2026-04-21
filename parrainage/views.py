@@ -231,13 +231,8 @@ def dashboard_view(request):
     payments = profile.payments.all()[:10]  # 10 derniers paiements
     referrals = profile.referrals.all()[:10]  # 10 premiers filleuls
 
-    # Récupérer les documents PDF disponibles
-    # Si VIP: tous les documents actifs
-    # Si non-VIP: seulement les documents qui ne requièrent pas VIP
-    if profile.is_vip:
-        pdf_documents = PDFDocument.objects.filter(is_active=True)
-    else:
-        pdf_documents = PDFDocument.objects.filter(is_active=True, require_vip=False)
+    # Récupérer les documents PDF disponibles (tous les documents actifs pour tout le monde)
+    pdf_documents = PDFDocument.objects.filter(is_active=True)
 
     # Calculer le stroke-dashoffset pour la progression circulaire
     # Circonférence = 2 * π * r = 2 * 3.14 * 70 ≈ 440
@@ -1136,11 +1131,6 @@ def admin_settings_view(request):
 def download_pdf(request, pk):
     """Télécharger un document PDF"""
     pdf_document = get_object_or_404(PDFDocument, pk=pk, is_active=True)
-
-    # Vérifier si le document est réservé aux VIP
-    if pdf_document.require_vip and not request.user.profile.is_vip:
-        messages.error(request, 'Ce document est réservé aux utilisateurs VIP.')
-        return redirect('dashboard')
 
     # Vérifier que le fichier existe
     if not pdf_document.file:

@@ -640,21 +640,7 @@
                 <i class="bi bi-trophy-fill"></i>
             </div>
             <p class="fw-bold mb-0">Félicitations ! Vous êtes VIP</p>
-            <p class="mb-0" style="font-size: 0.8rem; opacity: 0.9;">Accès complet aux marchés</p> <br> <br>
-            <p class="mb-2" style="font-size: 0.8rem; opacity: 0.9;">
-                Télécharge tes documents
-            </p>
-            {% if pdf_documents %}
-                {% for doc in pdf_documents %}
-                <a class="bg-white m-2 p-2 text-black rounded-full text-decoration-none d-inline-block"
-                   href="{% url 'download_pdf' pk=doc.pk %}"
-                   target="_blank">
-                    <i class="bi bi-file-earmark-pdf-fill text-danger"></i> {{ doc.title }}
-                </a>
-                {% endfor %}
-            {% else %}
-                <p class="mb-0" style="font-size: 0.8rem;">Aucun document disponible pour le moment</p>
-            {% endif %}
+            <p class="mb-0" style="font-size: 0.8rem; opacity: 0.9;">Accès complet aux marchés</p>
         </div>
         {% else %}
         <div class="p-3" style="background: rgba(245, 158, 11, 0.1); border-radius: 16px; text-align: center;">
